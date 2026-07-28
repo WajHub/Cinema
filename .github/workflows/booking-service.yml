@@ -1,0 +1,15 @@
+name: Catalog Service CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'booking-service/**'
+      - '.github/workflows/booking-service.yml'
+
+jobs:
+  run-shared-ci:
+    uses: ./.github/workflows/shared/ci.yml
+    with:
+      service-name: 'Booking Service'
+      service-path: 'booking-service'
