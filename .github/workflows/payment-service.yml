@@ -1,0 +1,16 @@
+name: Catalog Service CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'payment-service/**'
+      - '.github/workflows/payment-service.yml'
+
+jobs:
+  run-shared-ci:
+    uses: ./.github/workflows/shared/ci.yml
+    with:
+      service-name: 'Payment Service'
+      service-path: 'payment-service'

@@ -1,0 +1,16 @@
+name: Catalog Service CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'catalog-service/**'
+      - '.github/workflows/catalog-service.yml'
+
+jobs:
+  run-shared-ci:
+    uses: ./.github/workflows/shared/ci.yml
+    with:
+      service-name: 'Catalog Service'
+      service-path: 'catalog-service'

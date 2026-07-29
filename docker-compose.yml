@@ -18,5 +18,56 @@ services:
       timeout: 5s
       retries: 5
 
+  booking-service:
+    build:
+      context: ./booking-service
+      dockerfile: Dockerfile
+    container_name: cinema-booking-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8082
+      BOOKING_DB_URL: jdbc:postgresql://postgres:5432/booking_service
+      BOOKING_DB_USERNAME: postgres
+      BOOKING_DB_PASSWORD: postgres
+    ports:
+      - "8082:8082"
+
+  catalog-service:
+    build:
+      context: ./catalog-service
+      dockerfile: Dockerfile
+    container_name: cinema-catalog-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8083
+      CATALOG_DB_URL: jdbc:postgresql://postgres:5432/catalog_service
+      CATALOG_DB_USERNAME: postgres
+      CATALOG_DB_PASSWORD: postgres
+    ports:
+      - "8083:8083"
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: cinema-payment-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8084
+      PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/payment_service
+      PAYMENT_DB_USERNAME: postgres
+      PAYMENT_DB_PASSWORD: postgres
+    ports:
+      - "8084:8084"
+
 volumes:
   postgres_data:
