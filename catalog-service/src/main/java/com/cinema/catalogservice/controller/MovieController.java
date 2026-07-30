@@ -1,11 +1,11 @@
 package com.cinema.catalogservice.controller;
 
-import java.util.List;
-import java.util.UUID;
 import com.cinema.catalogservice.dto.MovieRequest;
 import com.cinema.catalogservice.dto.MovieResponse;
 import com.cinema.catalogservice.service.MovieService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/movies")
+@RequestMapping("/api/v1/movies")
 public class MovieController {
 
   private final MovieService movieService;

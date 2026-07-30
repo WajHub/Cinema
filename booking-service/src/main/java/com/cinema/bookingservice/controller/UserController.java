@@ -1,11 +1,11 @@
 package com.cinema.bookingservice.controller;
 
-import java.util.List;
-import java.util.UUID;
 import com.cinema.bookingservice.dto.UserRequest;
 import com.cinema.bookingservice.dto.UserResponse;
 import com.cinema.bookingservice.service.UserService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
   private final UserService userService;

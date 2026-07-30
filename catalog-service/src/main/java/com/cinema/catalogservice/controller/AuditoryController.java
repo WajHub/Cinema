@@ -1,11 +1,11 @@
 package com.cinema.catalogservice.controller;
 
-import java.util.List;
-import java.util.UUID;
 import com.cinema.catalogservice.dto.AuditoryRequest;
 import com.cinema.catalogservice.dto.AuditoryResponse;
 import com.cinema.catalogservice.service.AuditoryService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/auditoriums")
+@RequestMapping("/api/v1/auditoriums")
 public class AuditoryController {
 
   private final AuditoryService auditoryService;

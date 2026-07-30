@@ -1,6 +1,6 @@
 ### Booking service seed data
 
-POST http://localhost:8082/api/users
+POST http://localhost:8082/api/v1/users
 Content-Type: application/json
 
 {
@@ -8,7 +8,7 @@ Content-Type: application/json
   "name": "Alice"
 }
 
-POST http://localhost:8082/api/users
+POST http://localhost:8082/api/v1/users
 Content-Type: application/json
 
 {
