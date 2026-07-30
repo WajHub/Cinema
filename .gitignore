@@ -1,0 +1,14 @@
+.vscode/*
+.history/
+*.code-workspace
+*.vsix
+.schemaCache/
+.DS_Store
+.AppleDouble
+.LSSharedFileList
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/

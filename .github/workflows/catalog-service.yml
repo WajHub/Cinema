@@ -10,7 +10,7 @@ on:
 
 jobs:
   run-shared-ci:
-    uses: ./.github/workflows/shared/ci.yml
+    uses: ./.github/workflows/ci.yml
     with:
       service-name: 'Catalog Service'
       service-path: 'catalog-service'
