@@ -64,6 +64,7 @@ create index idx_session_movie_id on session (movie_id);
 
 create table session_movie_history (
     id uuid primary key,
+    original_session_id varchar(255) not null,
     cinema_name varchar(255) not null,
     cinema_city varchar(255) not null,
     auditory_name varchar(255) not null,
