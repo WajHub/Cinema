@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
 import com.cinema.catalogservice.dto.CinemaRequest;
 import com.cinema.catalogservice.entity.CinemaEntity;
 import com.cinema.catalogservice.repository.CinemaRepository;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -58,6 +58,7 @@ class CinemaServiceTest {
     var responses = cinemaService.findAll();
 
     assertThat(responses).hasSize(1);
-    assertThat(responses.get(0).name()).isEqualTo("Central Cinema");
+    assertThat(responses.getFirst()
+        .name()).isEqualTo("Central Cinema");
   }
 }

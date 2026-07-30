@@ -2,74 +2,128 @@ package com.cinema.bookingservice;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.UUID;
 import com.cinema.bookingservice.repository.UserRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient
 class BookingServiceCrudIntegrationTest {
 
-  @LocalServerPort
-  private int port;
+  @Autowired
+  private WebTestClient webTestClient;
 
   @Autowired
   private UserRepository userRepository;
 
-  @Autowired
-  private ObjectMapper objectMapper;
-
-  private final HttpClient httpClient = HttpClient.newHttpClient();
-
   @BeforeEach
   void cleanDatabase() {
-    userRepository.deleteAll();
+    userRepository.deleteAllInBatch();
   }
 
   @Test
-  void userCrudHappyPath() throws Exception {
-    String baseUrl = "http://localhost:" + port + "/api/users";
+  @DisplayName("Should create user successfully")
+  void shouldCreateUser() {
+    var request = new CreateUserRequest("alice@example.com", "Alice");
 
-    HttpRequest createRequest = HttpRequest.newBuilder(URI.create(baseUrl))
-      .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-      .POST(HttpRequest.BodyPublishers.ofString("""
-        {"email":"alice@example.com","name":"Alice"}
-        """))
-      .build();
-    HttpResponse<String> createdResponse = httpClient.send(createRequest, HttpResponse.BodyHandlers.ofString());
-    assertThat(createdResponse.statusCode()).isEqualTo(201);
+    webTestClient.post()
+        .uri("/api/v1/users")
+        .bodyValue(request)
+        .exchange()
+        .expectStatus()
+        .isCreated()
+        .expectBody(UserResponse.class)
+        .value(response -> {
+          assertThat(response).isNotNull();
+          assertThat(response.id()).isNotNull();
+          assertThat(response.email()).isEqualTo("alice@example.com");
+          assertThat(response.name()).isEqualTo("Alice");
+        });
+  }
 
-    JsonNode createdNode = objectMapper.readTree(createdResponse.body());
-    UUID id = UUID.fromString(createdNode.get("id").asText());
+  @Test
+  @DisplayName("Should get user by id")
+  void shouldGetUserById() {
+    UUID userId = createUserHelper("alice@example.com", "Alice");
 
-    HttpRequest getRequest = HttpRequest.newBuilder(URI.create(baseUrl + "/" + id)).GET().build();
-    HttpResponse<String> getResponse = httpClient.send(getRequest, HttpResponse.BodyHandlers.ofString());
-    assertThat(getResponse.statusCode()).isEqualTo(200);
+    webTestClient.get()
+        .uri("/api/v1/users/{id}", userId)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody(UserResponse.class)
+        .value(response -> {
+          assertThat(response).isNotNull();
+          assertThat(response.id()).isEqualTo(userId);
+          assertThat(response.email()).isEqualTo("alice@example.com");
+          assertThat(response.name()).isEqualTo("Alice");
+        });
+  }
 
-    HttpRequest updateRequest = HttpRequest.newBuilder(URI.create(baseUrl + "/" + id))
-      .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-      .method(HttpMethod.PUT.name(), HttpRequest.BodyPublishers.ofString("""
-        {"email":"alice.updated@example.com","name":"Alice Updated"}
-        """))
-      .build();
-    HttpResponse<String> updateResponse = httpClient.send(updateRequest, HttpResponse.BodyHandlers.ofString());
-    assertThat(updateResponse.statusCode()).isEqualTo(200);
+  @Test
+  @DisplayName("Should update user successfully")
+  void shouldUpdateUser() {
+    UUID userId = createUserHelper("alice@example.com", "Alice");
+    var updateRequest = new UpdateUserRequest("alice.updated@example.com", "Alice Updated");
 
-    HttpRequest deleteRequest = HttpRequest.newBuilder(URI.create(baseUrl + "/" + id)).DELETE().build();
-    HttpResponse<String> deleteResponse = httpClient.send(deleteRequest, HttpResponse.BodyHandlers.ofString());
-    assertThat(deleteResponse.statusCode()).isEqualTo(204);
+    webTestClient.put()
+        .uri("/api/v1/users/{id}", userId)
+        .bodyValue(updateRequest)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody(UserResponse.class)
+        .value(response -> {
+          assertThat(response).isNotNull();
+          assertThat(response.id()).isEqualTo(userId);
+          assertThat(response.email()).isEqualTo("alice.updated@example.com");
+          assertThat(response.name()).isEqualTo("Alice Updated");
+        });
+  }
 
-    assertThat(userRepository.findById(id)).isEmpty();
+  @Test
+  @DisplayName("Should delete user successfully")
+  void shouldDeleteUser() {
+    UUID userId = createUserHelper("alice@example.com", "Alice");
+
+    webTestClient.delete()
+        .uri("/api/v1/users/{id}", userId)
+        .exchange()
+        .expectStatus()
+        .isNoContent();
+
+    assertThat(userRepository.findById(userId)).isEmpty();
+  }
+
+  private UUID createUserHelper(String email, String name) {
+    var request = new CreateUserRequest(email, name);
+
+    UserResponse response = webTestClient.post()
+        .uri("/api/v1/users")
+        .bodyValue(request)
+        .exchange()
+        .expectStatus()
+        .isCreated()
+        .expectBody(UserResponse.class)
+        .returnResult()
+        .getResponseBody();
+
+    assertThat(response).isNotNull();
+    return response.id();
+  }
+
+  private record CreateUserRequest(String email, String name) {
+  }
+
+  private record UpdateUserRequest(String email, String name) {
+  }
+
+  private record UserResponse(UUID id, String email, String name) {
   }
 }
