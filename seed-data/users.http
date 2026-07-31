@@ -1,0 +1,17 @@
+### Booking service seed data
+
+POST http://localhost:8082/api/v1/users
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "name": "Alice"
+}
+
+POST http://localhost:8082/api/v1/users
+Content-Type: application/json
+
+{
+  "email": "bob@example.com",
+  "name": "Bob"
+}

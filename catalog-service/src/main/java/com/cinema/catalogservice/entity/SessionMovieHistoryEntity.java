@@ -27,6 +27,9 @@ public class SessionMovieHistoryEntity {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
+  @Column(name = "original_session_id", nullable = false)
+  private String originalSessionId;
+
   @Column(name = "cinema_name", nullable = false)
   private String cinemaName;
 
