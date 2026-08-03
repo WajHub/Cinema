@@ -18,6 +18,70 @@ services:
       timeout: 5s
       retries: 5
 
+
+  cinema-kafka-1:
+    image: apache/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      ############################################
+        # KRaft Metadata & Node Identity
+      ############################################
+      # Unique ID for this Kafka node
+      KAFKA_NODE_ID: 1
+      # Unique Kafka cluster identifier (required for KRaft mode)
+      KAFKA_CLUSTER_ID: 'lQC5smYaRKizbAAADSPeKw'
+      # Node roles — this instance will act as BOTH a broker and controller
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      ############################################
+        # Controller Quorum Configuration (Raft)
+      ############################################
+      # List of controller nodes that form the Raft quorum
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@cinema-kafka-1:9093'
+      # Listener name used by controllers for internal Raft communication
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      ############################################
+        # Network Listeners (Internal, External & Controller)
+      ############################################
+      # Define all listener endpoints for this Kafka node
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
+      # What each listener advertises to connecting clients
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://cinema-kafka-1:9092'
+      # Maps listener names to their security protocols
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      # Which listener brokers should use for internal communication
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      ############################################
+        #  Single-Node Cluster Safety Settings
+        #    (because replication > 1 would break)
+      ############################################
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      ############################################
+        #  Broker Defaults & Quality-of-Life Settings
+      ############################################
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0 
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 1
+
+    volumes:
+      - ./kafka_data:/var/lib/kafka/data
+
+
+  cinema-kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:latest 
+    container_name: cinema-kafka-ui
+    ports:
+      - "9090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: cinema-kafka-1:9092
+      DYNAMIC_CONFIG_ENABLED: 'true'  
+    depends_on:
+      - cinema-kafka-1
+
   booking-service:
     build:
       context: ./booking-service
@@ -71,3 +135,4 @@ services:
 
 volumes:
   postgres_data:
+  kafka_data:
