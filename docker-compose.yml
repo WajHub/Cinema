@@ -21,9 +21,10 @@ services:
 
   cinema-kafka-1:
     image: apache/kafka:latest
-    container_name: kafka
+    container_name: cinema-kafka-1
     ports:
-      - "9092:9092"
+      - "9092:9092" # Internal listener
+      - "9094:9094" # External listener
     environment:
       ############################################
         # KRaft Metadata & Node Identity
@@ -45,11 +46,16 @@ services:
         # Network Listeners (Internal, External & Controller)
       ############################################
       # Define all listener endpoints for this Kafka node
-      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
+      KAFKA_LISTENERS: >
+        PLAINTEXT://0.0.0.0:9092,
+        CONTROLLER://0.0.0.0:9093,
+        EXTERNAL://0.0.0.0:9094
       # What each listener advertises to connecting clients
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://cinema-kafka-1:9092'
+      KAFKA_ADVERTISED_LISTENERS: >
+        PLAINTEXT://cinema-kafka-1:9092,
+        EXTERNAL://localhost:9094
       # Maps listener names to their security protocols
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
       # Which listener brokers should use for internal communication
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       ############################################
@@ -66,9 +72,15 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_NUM_PARTITIONS: 1
 
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
     volumes:
       - ./kafka_data:/var/lib/kafka/data
-
 
   cinema-kafka-ui:
     image: ghcr.io/kafbat/kafka-ui:latest 
@@ -80,7 +92,8 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: cinema-kafka-1:9092
       DYNAMIC_CONFIG_ENABLED: 'true'  
     depends_on:
-      - cinema-kafka-1
+      cinema-kafka-1:
+        condition: service_healthy
 
   booking-service:
     build:
@@ -91,11 +104,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      cinema-kafka-1:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8082
       BOOKING_DB_URL: jdbc:postgresql://postgres:5432/booking_service
       BOOKING_DB_USERNAME: postgres
       BOOKING_DB_PASSWORD: postgres
+      KAFKA_BOOTSTRAP_SERVER: cinema-kafka-1:9092
     ports:
       - "8082:8082"
 
@@ -107,6 +123,8 @@ services:
     restart: unless-stopped
     depends_on:
       postgres:
+        condition: service_healthy
+      cinema-kafka-1:
         condition: service_healthy
     environment:
       SERVER_PORT: 8083
@@ -124,6 +142,8 @@ services:
     restart: unless-stopped
     depends_on:
       postgres:
+        condition: service_healthy
+      cinema-kafka-1:
         condition: service_healthy
     environment:
       SERVER_PORT: 8084
