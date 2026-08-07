@@ -1,5 +1,6 @@
 package com.cinema.bookingservice.kafka;
 
+import com.cinema.kafka.event.CatalogEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -11,7 +12,7 @@ public class MessageConsumer {
   private static final Logger log = LoggerFactory.getLogger(MessageConsumer.class);
 
   @KafkaListener(topics = "${app.kafka.topics.catalog-events}", groupId = "${spring.kafka.consumer.group-id}")
-  public void listen(CustomMessage message) {
+  public void listen(CatalogEvent message) {
     log.info("Received message: {}", message.getMessage());
   }
 }

@@ -5,11 +5,11 @@ import com.cinema.catalogservice.dto.SessionResponse;
 import com.cinema.catalogservice.entity.AuditoryEntity;
 import com.cinema.catalogservice.entity.MovieEntity;
 import com.cinema.catalogservice.entity.SessionEntity;
-import com.cinema.catalogservice.kafka.CustomMessage;
 import com.cinema.catalogservice.kafka.CustomMessageProducer;
 import com.cinema.catalogservice.repository.AuditoryRepository;
 import com.cinema.catalogservice.repository.MovieRepository;
 import com.cinema.catalogservice.repository.SessionRepository;
+import com.cinema.kafka.event.CatalogEvent;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +31,10 @@ public class SessionService {
   public SessionResponse create(SessionRequest request) {
     SessionEntity session = new SessionEntity();
     apply(session, request);
-    customMessageProducer.sendMessage(CustomMessage.builder()
-        .message("New session created")
-        .build());
+    CatalogEvent event = CatalogEvent.newBuilder()
+        .setMessage("New session created")
+        .build();
+    customMessageProducer.sendMessage(event);
     return toResponse(sessionRepository.save(session));
   }
 

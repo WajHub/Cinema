@@ -43,8 +43,8 @@ POST http://localhost:8083/api/v1/sessions
 Content-Type: application/json
 
 {
-  "auditoryId": "REPLACE_WITH_AUDITORY_ID_2",
-  "movieId": "REPLACE_WITH_MOVIE_ID_1",
+  "auditoryId": "0b6bf792-94b7-4005-8c68-19e5c969c5d8",
+  "movieId": "f87d4870-2bac-4cfb-a902-69ed62ee9f40",
   "startsAt": "2026-08-02T19:00:00Z",
   "endsAt": "2026-08-02T21:08:00Z",
   "basePrice": 13.00,

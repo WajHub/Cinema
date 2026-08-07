@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "CatalogEvent",
+  "namespace": "com.cinema.kafka.event",
+  "doc": "Schema for catalog-related events",
+  "fields": [
+    {
+      "name": "message",
+      "type": "string",
+      "doc": "Event content or message payload"
+    }
+  ]
+}

@@ -82,6 +82,20 @@ services:
     volumes:
       - ./kafka_data:/var/lib/kafka/data
 
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.6.0
+    container_name: cinema-schema-registry
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    depends_on:
+      cinema-kafka-1:
+        condition: service_healthy
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: cinema-kafka-1:9092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
   cinema-kafka-ui:
     image: ghcr.io/kafbat/kafka-ui:latest 
     container_name: cinema-kafka-ui
@@ -90,17 +104,20 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local-cluster
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: cinema-kafka-1:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
       DYNAMIC_CONFIG_ENABLED: 'true'  
     depends_on:
       cinema-kafka-1:
         condition: service_healthy
+      schema-registry:
+        condition: service_started
 
   booking-service:
     build:
       context: ./booking-service
       dockerfile: Dockerfile
     container_name: cinema-booking-service
-    restart: unless-stopped
+    restart: no
     depends_on:
       postgres:
         condition: service_healthy
@@ -112,6 +129,7 @@ services:
       BOOKING_DB_USERNAME: postgres
       BOOKING_DB_PASSWORD: postgres
       KAFKA_BOOTSTRAP_SERVER: cinema-kafka-1:9092
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
     ports:
       - "8082:8082"
 
@@ -120,7 +138,7 @@ services:
       context: ./catalog-service
       dockerfile: Dockerfile
     container_name: cinema-catalog-service
-    restart: unless-stopped
+    restart: no
     depends_on:
       postgres:
         condition: service_healthy
@@ -131,6 +149,8 @@ services:
       CATALOG_DB_URL: jdbc:postgresql://postgres:5432/catalog_service
       CATALOG_DB_USERNAME: postgres
       CATALOG_DB_PASSWORD: postgres
+      KAFKA_BOOTSTRAP_SERVER: cinema-kafka-1:9092
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
     ports:
       - "8083:8083"
 
@@ -139,7 +159,7 @@ services:
       context: ./payment-service
       dockerfile: Dockerfile
     container_name: cinema-payment-service
-    restart: unless-stopped
+    restart: no
     depends_on:
       postgres:
         condition: service_healthy
