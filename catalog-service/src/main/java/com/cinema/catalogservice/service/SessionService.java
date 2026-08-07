@@ -1,15 +1,17 @@
 package com.cinema.catalogservice.service;
 
-import java.util.List;
-import java.util.UUID;
 import com.cinema.catalogservice.dto.SessionRequest;
 import com.cinema.catalogservice.dto.SessionResponse;
 import com.cinema.catalogservice.entity.AuditoryEntity;
 import com.cinema.catalogservice.entity.MovieEntity;
 import com.cinema.catalogservice.entity.SessionEntity;
+import com.cinema.catalogservice.kafka.CustomMessage;
+import com.cinema.catalogservice.kafka.CustomMessageProducer;
 import com.cinema.catalogservice.repository.AuditoryRepository;
 import com.cinema.catalogservice.repository.MovieRepository;
 import com.cinema.catalogservice.repository.SessionRepository;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,16 +26,23 @@ public class SessionService {
   private final SessionRepository sessionRepository;
   private final AuditoryRepository auditoryRepository;
   private final MovieRepository movieRepository;
+  private final CustomMessageProducer customMessageProducer;
 
   public SessionResponse create(SessionRequest request) {
     SessionEntity session = new SessionEntity();
     apply(session, request);
+    customMessageProducer.sendMessage(CustomMessage.builder()
+        .message("New session created")
+        .build());
     return toResponse(sessionRepository.save(session));
   }
 
   @Transactional(readOnly = true)
   public List<SessionResponse> findAll() {
-    return sessionRepository.findAll().stream().map(this::toResponse).collect(java.util.stream.Collectors.toList());
+    return sessionRepository.findAll()
+        .stream()
+        .map(this::toResponse)
+        .toList();
   }
 
   @Transactional(readOnly = true)
@@ -76,8 +85,10 @@ public class SessionService {
   }
 
   private SessionResponse toResponse(SessionEntity session) {
-    return new SessionResponse(session.getId(), session.getAuditory().getId(),
-        session.getAuditory().getName(), session.getMovie().getId(), session.getMovie().getTitle(),
-        session.getStartsAt(), session.getEndsAt(), session.getBasePrice(), session.getStatus());
+    return new SessionResponse(session.getId(), session.getAuditory()
+        .getId(), session.getAuditory()
+            .getName(), session.getMovie()
+                .getId(), session.getMovie()
+                    .getTitle(), session.getStartsAt(), session.getEndsAt(), session.getBasePrice(), session.getStatus());
   }
 }
