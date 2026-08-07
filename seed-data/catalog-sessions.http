@@ -1,0 +1,52 @@
+###
+POST http://localhost:8083/api/v1/sessions
+Content-Type: application/json
+
+{
+  "auditoryId": "REPLACE_WITH_AUDITORY_ID_1",
+  "movieId": "REPLACE_WITH_MOVIE_ID_1",
+  "startsAt": "2026-08-01T18:00:00Z",
+  "endsAt": "2026-08-01T20:08:00Z",
+  "basePrice": 12.50,
+  "status": "SCHEDULED"
+}
+
+
+###
+POST http://localhost:8083/api/v1/sessions
+Content-Type: application/json
+
+{
+  "auditoryId": "REPLACE_WITH_AUDITORY_ID_2",
+  "movieId": "REPLACE_WITH_MOVIE_ID_2",
+  "startsAt": "2026-08-01T20:30:00Z",
+  "endsAt": "2026-08-01T22:14:00Z",
+  "basePrice": 14.00,
+  "status": "SCHEDULED"
+}
+
+###
+POST http://localhost:8083/api/v1/sessions
+Content-Type: application/json
+
+{
+  "auditoryId": "REPLACE_WITH_AUDITORY_ID_1",
+  "movieId": "REPLACE_WITH_MOVIE_ID_3",
+  "startsAt": "2026-08-02T16:00:00Z",
+  "endsAt": "2026-08-02T17:36:00Z",
+  "basePrice": 11.00,
+  "status": "SCHEDULED"
+}
+
+###
+POST http://localhost:8083/api/v1/sessions
+Content-Type: application/json
+
+{
+  "auditoryId": "REPLACE_WITH_AUDITORY_ID_2",
+  "movieId": "REPLACE_WITH_MOVIE_ID_1",
+  "startsAt": "2026-08-02T19:00:00Z",
+  "endsAt": "2026-08-02T21:08:00Z",
+  "basePrice": 13.00,
+  "status": "SCHEDULED"
+}
