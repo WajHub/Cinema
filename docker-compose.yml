@@ -132,6 +132,13 @@ services:
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
     ports:
       - "8082:8082"
+    develop:
+      watch:
+        - action: sync
+          path: ./booking-service/src
+          target: /app/src
+        - action: rebuild
+          path: ./booking-service/pom.xml
 
   catalog-service:
     build:
@@ -153,6 +160,13 @@ services:
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
     ports:
       - "8083:8083"
+    develop:
+      watch:
+        - action: sync
+          path: ./catalog-service/src
+          target: /app/src
+        - action: rebuild
+          path: ./catalog-service/pom.xml
 
   payment-service:
     build:
@@ -172,6 +186,13 @@ services:
       PAYMENT_DB_PASSWORD: postgres
     ports:
       - "8084:8084"
+    develop:
+      watch:
+        - action: sync
+          path: ./payment-service/src
+          target: /app/src
+        - action: rebuild
+          path: ./payment-service/pom.xml
 
 volumes:
   postgres_data:
