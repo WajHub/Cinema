@@ -50,3 +50,7 @@ Content-Type: application/json
   "basePrice": 13.00,
   "status": "SCHEDULED"
 }
+
+###
+GET http://localhost:8083/api/v1/sessions
+Content-Type: application/json
