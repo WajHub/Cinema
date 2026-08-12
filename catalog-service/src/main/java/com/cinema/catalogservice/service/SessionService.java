@@ -4,12 +4,17 @@ import com.cinema.catalogservice.dto.SessionRequest;
 import com.cinema.catalogservice.dto.SessionResponse;
 import com.cinema.catalogservice.entity.AuditoryEntity;
 import com.cinema.catalogservice.entity.MovieEntity;
+import com.cinema.catalogservice.entity.OutboxEventEntity;
+import com.cinema.catalogservice.entity.SeatEntity;
 import com.cinema.catalogservice.entity.SessionEntity;
-import com.cinema.catalogservice.kafka.CustomMessageProducer;
+import com.cinema.catalogservice.kafka.event.SessionChangedEventPayload;
+import com.cinema.catalogservice.kafka.event.SessionChangedEventSeatPayload;
 import com.cinema.catalogservice.repository.AuditoryRepository;
 import com.cinema.catalogservice.repository.MovieRepository;
+import com.cinema.catalogservice.repository.OutboxEventRepository;
+import com.cinema.catalogservice.repository.SeatRepository;
 import com.cinema.catalogservice.repository.SessionRepository;
-import com.cinema.kafka.event.CatalogEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,16 +31,16 @@ public class SessionService {
   private final SessionRepository sessionRepository;
   private final AuditoryRepository auditoryRepository;
   private final MovieRepository movieRepository;
-  private final CustomMessageProducer customMessageProducer;
+  private final SeatRepository seatRepository;
+  private final OutboxEventRepository outboxEventRepository;
+  private final ObjectMapper objectMapper;
 
   public SessionResponse create(SessionRequest request) {
     SessionEntity session = new SessionEntity();
     apply(session, request);
-    CatalogEvent event = CatalogEvent.newBuilder()
-        .setMessage("New session created")
-        .build();
-    customMessageProducer.sendMessage(event);
-    return toResponse(sessionRepository.save(session));
+    SessionEntity saved = sessionRepository.save(session);
+    persistOutboxEvent(saved, "CREATE");
+    return toResponse(saved);
   }
 
   @Transactional(readOnly = true)
@@ -54,7 +59,9 @@ public class SessionService {
   public SessionResponse update(UUID id, SessionRequest request) {
     SessionEntity session = findEntity(id);
     apply(session, request);
-    return toResponse(sessionRepository.save(session));
+    SessionEntity saved = sessionRepository.save(session);
+    persistOutboxEvent(saved, "UPDATE");
+    return toResponse(saved);
   }
 
   public void delete(UUID id) {
@@ -91,5 +98,38 @@ public class SessionService {
             .getName(), session.getMovie()
                 .getId(), session.getMovie()
                     .getTitle(), session.getStartsAt(), session.getEndsAt(), session.getBasePrice(), session.getStatus());
+  }
+
+  private void persistOutboxEvent(SessionEntity session, String eventType) {
+    OutboxEventEntity outboxEvent = new OutboxEventEntity();
+    outboxEvent.setAggregateType("session");
+    outboxEvent.setAggregateId(session.getId());
+    outboxEvent.setType("SessionChangedEvent");
+    outboxEvent.setPayload(toOutboxPayload(session, eventType));
+    outboxEventRepository.save(outboxEvent);
+  }
+
+  private String toOutboxPayload(SessionEntity session, String eventType) {
+    try {
+      SessionChangedEventPayload payload = new SessionChangedEventPayload(eventType, session.getId(), session.getAuditory()
+          .getId(), session.getAuditory()
+              .getName(), session.getMovie()
+                  .getId(), session.getMovie()
+                      .getTitle(), session.getStartsAt()
+                          .toString(), session.getEndsAt()
+                              .toString(), session.getStatus(), session.getBasePrice()
+                                  .toPlainString(), seatRepository.findAllByAuditory_Id(session.getAuditory()
+                                      .getId())
+                                      .stream()
+                                      .sorted(java.util.Comparator.comparing(SeatEntity::getRowLabel)
+                                          .thenComparing(SeatEntity::getSeatNumber))
+                                      .map(seat -> new SessionChangedEventSeatPayload(seat.getId(), seat.getRowLabel(), seat.getSeatNumber(), seat
+                                          .getSeatPrice()
+                                          .toPlainString()))
+                                      .toList());
+      return objectMapper.writeValueAsString(payload);
+    } catch (Exception exception) {
+      throw new IllegalStateException("Failed to serialize session outbox event", exception);
+    }
   }
 }

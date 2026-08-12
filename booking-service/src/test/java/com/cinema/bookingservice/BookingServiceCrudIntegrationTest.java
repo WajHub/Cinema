@@ -3,6 +3,7 @@ package com.cinema.bookingservice;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.cinema.bookingservice.repository.UserRepository;
+import com.cinema.bookingservice.support.KafkaTestSupport;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +15,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-class BookingServiceCrudIntegrationTest {
+class BookingServiceCrudIntegrationTest extends KafkaTestSupport {
 
   @Autowired
   private WebTestClient webTestClient;

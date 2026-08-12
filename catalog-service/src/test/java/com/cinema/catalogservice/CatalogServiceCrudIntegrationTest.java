@@ -5,8 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.cinema.catalogservice.repository.AuditoryRepository;
 import com.cinema.catalogservice.repository.CinemaRepository;
 import com.cinema.catalogservice.repository.MovieRepository;
+import com.cinema.catalogservice.repository.OutboxEventRepository;
 import com.cinema.catalogservice.repository.SeatRepository;
 import com.cinema.catalogservice.repository.SessionRepository;
+import com.cinema.catalogservice.support.KafkaTestSupport;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +21,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-class CatalogServiceIntegrationTest {
+class CatalogServiceCrudIntegrationTest extends KafkaTestSupport {
 
   @Autowired
   private WebTestClient webTestClient;
@@ -34,9 +36,12 @@ class CatalogServiceIntegrationTest {
   private MovieRepository movieRepository;
   @Autowired
   private SessionRepository sessionRepository;
+  @Autowired
+  private OutboxEventRepository outboxEventRepository;
 
   @BeforeEach
   void cleanDatabase() {
+    outboxEventRepository.deleteAllInBatch();
     sessionRepository.deleteAllInBatch();
     seatRepository.deleteAllInBatch();
     auditoryRepository.deleteAllInBatch();
