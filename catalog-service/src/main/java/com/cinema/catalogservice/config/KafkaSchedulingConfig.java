@@ -1,7 +1,7 @@
-package com.cinema.catalogservice.kafka;
+package com.cinema.catalogservice.config;
 
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
 @EnableScheduling

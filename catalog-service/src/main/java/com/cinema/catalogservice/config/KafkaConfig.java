@@ -1,4 +1,4 @@
-package com.cinema.catalogservice.kafka;
+package com.cinema.catalogservice.config;
 
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.TopicConfig;
