@@ -85,7 +85,7 @@ services:
   schema-registry:
     image: confluentinc/cp-schema-registry:7.6.0
     container_name: cinema-schema-registry
-    restart: unless-stopped
+    restart: no
     ports:
       - "8081:8081"
     depends_on:
