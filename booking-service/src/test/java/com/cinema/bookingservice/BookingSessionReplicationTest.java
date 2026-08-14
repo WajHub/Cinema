@@ -10,7 +10,6 @@ import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.MovieSessionRepository;
 import com.cinema.bookingservice.repository.SessionSeatRepository;
 import com.cinema.bookingservice.repository.UserRepository;
-import com.cinema.bookingservice.support.KafkaTestSupport;
 import com.cinema.kafka.event.SessionChangedEvent;
 import com.cinema.kafka.event.SessionChangedEventSeat;
 import com.cinema.kafka.event.SessionChangedEventType;
@@ -21,13 +20,30 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
-@SpringBootTest
-class BookingSessionReplicationTest extends KafkaTestSupport {
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient
+@Testcontainers
+class BookingSessionReplicationTest {
 
   @Autowired
   private KafkaTemplate<String, Object> kafkaTemplate;
+
+  @Container
+  static final KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
+
+  @DynamicPropertySource
+  static void overrideProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+  }
 
   @Autowired
   private MovieSessionRepository movieSessionRepository;
@@ -54,15 +70,18 @@ class BookingSessionReplicationTest extends KafkaTestSupport {
     UUID sessionId = UUID.randomUUID();
     UUID seatId = UUID.randomUUID();
 
-    kafkaTemplate.send("test.catalog-events", sessionEvent(SessionChangedEventType.CREATE, sessionId,
-        "Inception", List.of(seatEvent(seatId, "A", 1, BigDecimal.valueOf(12.50)))));
+    kafkaTemplate.send("test.catalog-events", sessionEvent(SessionChangedEventType.CREATE, sessionId, "Inception", List.of(seatEvent(seatId, "A", 1,
+        BigDecimal.valueOf(12.50)))));
 
-    waitFor(() -> movieSessionRepository.findByCatalogSessionId(sessionId).isPresent());
+    waitFor(() -> movieSessionRepository.findByCatalogSessionId(sessionId)
+        .isPresent());
 
-    MovieSessionEntity session = movieSessionRepository.findByCatalogSessionId(sessionId).orElseThrow();
+    MovieSessionEntity session = movieSessionRepository.findByCatalogSessionId(sessionId)
+        .orElseThrow();
     assertThat(session.getMovieTitle()).isEqualTo("Inception");
 
-    SessionSeatEntity seat = sessionSeatRepository.findBySession_IdAndSeatId(session.getId(), seatId).orElseThrow();
+    SessionSeatEntity seat = sessionSeatRepository.findBySession_IdAndSeatId(session.getId(), seatId)
+        .orElseThrow();
     assertThat(seat.getRowLabel()).isEqualTo("A");
     assertThat(seat.getSeatNumber()).isEqualTo(1);
     assertThat(seat.getFinalPrice()).isEqualByComparingTo("12.50");
@@ -73,13 +92,16 @@ class BookingSessionReplicationTest extends KafkaTestSupport {
     UUID sessionId = UUID.randomUUID();
     UUID seatId = UUID.randomUUID();
 
-    kafkaTemplate.send("test.catalog-events", sessionEvent(SessionChangedEventType.CREATE, sessionId,
-        "Inception", List.of(seatEvent(seatId, "A", 1, BigDecimal.valueOf(12.50)))));
+    kafkaTemplate.send("test.catalog-events", sessionEvent(SessionChangedEventType.CREATE, sessionId, "Inception", List.of(seatEvent(seatId, "A", 1,
+        BigDecimal.valueOf(12.50)))));
 
-    waitFor(() -> movieSessionRepository.findByCatalogSessionId(sessionId).isPresent());
+    waitFor(() -> movieSessionRepository.findByCatalogSessionId(sessionId)
+        .isPresent());
 
-    MovieSessionEntity session = movieSessionRepository.findByCatalogSessionId(sessionId).orElseThrow();
-    SessionSeatEntity seat = sessionSeatRepository.findBySession_IdAndSeatId(session.getId(), seatId).orElseThrow();
+    MovieSessionEntity session = movieSessionRepository.findByCatalogSessionId(sessionId)
+        .orElseThrow();
+    SessionSeatEntity seat = sessionSeatRepository.findBySession_IdAndSeatId(session.getId(), seatId)
+        .orElseThrow();
 
     UserEntity user = new UserEntity();
     user.setEmail("alice@example.com");
@@ -96,31 +118,35 @@ class BookingSessionReplicationTest extends KafkaTestSupport {
     seat.setBooking(booking);
     sessionSeatRepository.save(seat);
 
-    kafkaTemplate.send("test.catalog-events", sessionEvent(SessionChangedEventType.UPDATE, sessionId,
-        "Inception 2", List.of(seatEvent(seatId, "B", 2, BigDecimal.valueOf(20.00)))));
+    kafkaTemplate.send("test.catalog-events", sessionEvent(SessionChangedEventType.UPDATE, sessionId, "Inception 2", List.of(seatEvent(seatId, "B", 2,
+        BigDecimal.valueOf(20.00)))));
 
     waitFor(() -> movieSessionRepository.findByCatalogSessionId(sessionId)
         .map(value -> "Inception 2".equals(value.getMovieTitle()))
         .orElse(false));
 
-    MovieSessionEntity updatedSession = movieSessionRepository.findByCatalogSessionId(sessionId).orElseThrow();
-    SessionSeatEntity updatedSeat = sessionSeatRepository.findBySession_IdAndSeatId(updatedSession.getId(), seatId).orElseThrow();
+    MovieSessionEntity updatedSession = movieSessionRepository.findByCatalogSessionId(sessionId)
+        .orElseThrow();
+    SessionSeatEntity updatedSeat = sessionSeatRepository.findBySession_IdAndSeatId(updatedSession.getId(), seatId)
+        .orElseThrow();
 
     assertThat(updatedSession.getMovieTitle()).isEqualTo("Inception 2");
     assertThat(updatedSeat.getBooking()).isNotNull();
-    assertThat(updatedSeat.getBooking().getId()).isEqualTo(booking.getId());
+    assertThat(updatedSeat.getBooking()
+        .getId()).isEqualTo(booking.getId());
     assertThat(updatedSeat.getRowLabel()).isEqualTo("A");
     assertThat(updatedSeat.getSeatNumber()).isEqualTo(1);
   }
 
-  private SessionChangedEvent sessionEvent(SessionChangedEventType type, UUID sessionId,
-      String movieTitle, List<SessionChangedEventSeat> seats) {
+  private SessionChangedEvent sessionEvent(SessionChangedEventType type, UUID sessionId, String movieTitle, List<SessionChangedEventSeat> seats) {
     return SessionChangedEvent.newBuilder()
         .setEventType(type)
         .setSessionId(sessionId.toString())
-        .setAuditoryId(UUID.randomUUID().toString())
+        .setAuditoryId(UUID.randomUUID()
+            .toString())
         .setAuditoryName("Hall 1")
-        .setMovieId(UUID.randomUUID().toString())
+        .setMovieId(UUID.randomUUID()
+            .toString())
         .setMovieTitle(movieTitle)
         .setStartsAt("2026-08-12T10:00:00Z")
         .setEndsAt("2026-08-12T12:00:00Z")
