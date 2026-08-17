@@ -1,4 +1,4 @@
-package com.cinema.bookingservice;
+package com.cinema.bookingservice.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -6,64 +6,16 @@ import com.cinema.bookingservice.entity.BookingEntity;
 import com.cinema.bookingservice.entity.MovieSessionEntity;
 import com.cinema.bookingservice.entity.SessionSeatEntity;
 import com.cinema.bookingservice.entity.UserEntity;
-import com.cinema.bookingservice.repository.BookingRepository;
-import com.cinema.bookingservice.repository.MovieSessionRepository;
-import com.cinema.bookingservice.repository.SessionSeatRepository;
-import com.cinema.bookingservice.repository.UserRepository;
 import com.cinema.kafka.event.SessionChangedEvent;
 import com.cinema.kafka.event.SessionChangedEventSeat;
 import com.cinema.kafka.event.SessionChangedEventType;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
-@Testcontainers
-class BookingSessionReplicationTest {
 
-  @Autowired
-  private KafkaTemplate<String, Object> kafkaTemplate;
-
-  @Container
-  static final KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
-
-  @DynamicPropertySource
-  static void overrideProperties(DynamicPropertyRegistry registry) {
-    registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-  }
-
-  @Autowired
-  private MovieSessionRepository movieSessionRepository;
-
-  @Autowired
-  private SessionSeatRepository sessionSeatRepository;
-
-  @Autowired
-  private BookingRepository bookingRepository;
-
-  @Autowired
-  private UserRepository userRepository;
-
-  @BeforeEach
-  void cleanDatabase() {
-    sessionSeatRepository.deleteAllInBatch();
-    bookingRepository.deleteAllInBatch();
-    movieSessionRepository.deleteAllInBatch();
-    userRepository.deleteAllInBatch();
-  }
+class BookingSessionReplicationTest extends IntegrationTestConfiguration {
 
   @Test
   void replicatesSessionAndSeatsOnCreateEvent() throws Exception {
