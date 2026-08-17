@@ -1,0 +1,14 @@
+### Catalog service seed data
+POST http://localhost:8083/api/v1/cinemas
+Content-Type: application/json
+
+{
+  "name": "Central Cinema",
+  "address": "Main St 1",
+  "city": "Springfield",
+  "active": true
+}
+
+###
+GET http://localhost:8083/api/v1/cinemas
+Content-Type: application/json

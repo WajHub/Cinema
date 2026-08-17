@@ -1,0 +1,47 @@
+###
+POST http://localhost:8083/api/v1/movies
+Content-Type: application/json
+
+{
+  "title": "Neon City",
+  "description": "Sci-fi action in a neon future.",
+  "posterUrl": "https://example.com/neon-city.jpg",
+  "genres": ["Sci-Fi", "Action"],
+  "durationMinutes": 128,
+  "language": "English",
+  "ageRating": "PG-13",
+  "releaseDate": "2026-08-01",
+  "active": true
+}
+
+###
+POST http://localhost:8083/api/v1/movies
+Content-Type: application/json
+
+{
+  "title": "Silent Harbor",
+  "description": "A tense coastal mystery.",
+  "posterUrl": "https://example.com/silent-harbor.jpg",
+  "genres": ["Mystery", "Drama"],
+  "durationMinutes": 104,
+  "language": "English",
+  "ageRating": "R",
+  "releaseDate": "2026-08-08",
+  "active": true
+}
+
+###
+POST http://localhost:8083/api/v1/movies
+Content-Type: application/json
+
+{
+  "title": "Paper Planets",
+  "description": "Animated adventure across the stars.",
+  "posterUrl": "https://example.com/paper-planets.jpg",
+  "genres": ["Animation", "Adventure"],
+  "durationMinutes": 96,
+  "language": "English",
+  "ageRating": "G",
+  "releaseDate": "2026-08-15",
+  "active": true
+}

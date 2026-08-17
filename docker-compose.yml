@@ -18,48 +18,166 @@ services:
       timeout: 5s
       retries: 5
 
+
+  cinema-kafka-1:
+    image: apache/kafka:latest
+    container_name: cinema-kafka-1
+    ports:
+      - "9092:9092" # Internal listener
+      - "9094:9094" # External listener
+    environment:
+      ############################################
+        # KRaft Metadata & Node Identity
+      ############################################
+      # Unique ID for this Kafka node
+      KAFKA_NODE_ID: 1
+      # Unique Kafka cluster identifier (required for KRaft mode)
+      KAFKA_CLUSTER_ID: 'lQC5smYaRKizbAAADSPeKw'
+      # Node roles — this instance will act as BOTH a broker and controller
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      ############################################
+        # Controller Quorum Configuration (Raft)
+      ############################################
+      # List of controller nodes that form the Raft quorum
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@cinema-kafka-1:9093'
+      # Listener name used by controllers for internal Raft communication
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      ############################################
+        # Network Listeners (Internal, External & Controller)
+      ############################################
+      # Define all listener endpoints for this Kafka node
+      KAFKA_LISTENERS: >
+        PLAINTEXT://0.0.0.0:9092,
+        CONTROLLER://0.0.0.0:9093,
+        EXTERNAL://0.0.0.0:9094
+      # What each listener advertises to connecting clients
+      KAFKA_ADVERTISED_LISTENERS: >
+        PLAINTEXT://cinema-kafka-1:9092,
+        EXTERNAL://localhost:9094
+      # Maps listener names to their security protocols
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      # Which listener brokers should use for internal communication
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      ############################################
+        #  Single-Node Cluster Safety Settings
+        #    (because replication > 1 would break)
+      ############################################
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      ############################################
+        #  Broker Defaults & Quality-of-Life Settings
+      ############################################
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0 
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 1
+
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    volumes:
+      - ./kafka_data:/var/lib/kafka/data
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.6.0
+    container_name: cinema-schema-registry
+    restart: no
+    ports:
+      - "8081:8081"
+    depends_on:
+      cinema-kafka-1:
+        condition: service_healthy
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: cinema-kafka-1:9092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+  cinema-kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:latest 
+    container_name: cinema-kafka-ui
+    ports:
+      - "9090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: cinema-kafka-1:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+      DYNAMIC_CONFIG_ENABLED: 'true'  
+    depends_on:
+      cinema-kafka-1:
+        condition: service_healthy
+      schema-registry:
+        condition: service_started
+
   booking-service:
     build:
       context: ./booking-service
       dockerfile: Dockerfile
     container_name: cinema-booking-service
-    restart: unless-stopped
+    restart: no
     depends_on:
       postgres:
+        condition: service_healthy
+      cinema-kafka-1:
         condition: service_healthy
     environment:
       SERVER_PORT: 8082
       BOOKING_DB_URL: jdbc:postgresql://postgres:5432/booking_service
       BOOKING_DB_USERNAME: postgres
       BOOKING_DB_PASSWORD: postgres
+      KAFKA_BOOTSTRAP_SERVER: cinema-kafka-1:9092
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
     ports:
       - "8082:8082"
+    develop:
+      watch:
+        - action: sync
+          path: ./booking-service/src
+          target: /app/src
+        - action: rebuild
+          path: ./booking-service/pom.xml
 
   catalog-service:
     build:
       context: ./catalog-service
       dockerfile: Dockerfile
     container_name: cinema-catalog-service
-    restart: unless-stopped
+    restart: no
     depends_on:
       postgres:
+        condition: service_healthy
+      cinema-kafka-1:
         condition: service_healthy
     environment:
       SERVER_PORT: 8083
       CATALOG_DB_URL: jdbc:postgresql://postgres:5432/catalog_service
       CATALOG_DB_USERNAME: postgres
       CATALOG_DB_PASSWORD: postgres
+      KAFKA_BOOTSTRAP_SERVER: cinema-kafka-1:9092
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
     ports:
       - "8083:8083"
+    develop:
+      watch:
+        - action: sync
+          path: ./catalog-service/src
+          target: /app/src
+        - action: rebuild
+          path: ./catalog-service/pom.xml
 
   payment-service:
     build:
       context: ./payment-service
       dockerfile: Dockerfile
     container_name: cinema-payment-service
-    restart: unless-stopped
+    restart: no
     depends_on:
       postgres:
+        condition: service_healthy
+      cinema-kafka-1:
         condition: service_healthy
     environment:
       SERVER_PORT: 8084
@@ -68,6 +186,14 @@ services:
       PAYMENT_DB_PASSWORD: postgres
     ports:
       - "8084:8084"
+    develop:
+      watch:
+        - action: sync
+          path: ./payment-service/src
+          target: /app/src
+        - action: rebuild
+          path: ./payment-service/pom.xml
 
 volumes:
   postgres_data:
+  kafka_data:

@@ -1,0 +1,45 @@
+###
+POST http://localhost:8083/api/v1/auditoriums
+Content-Type: application/json
+
+{
+  "cinemaId": "REPLACE_WITH_CINEMA_ID",
+  "name": "Auditory 1",
+  "capacity": 10,
+  "active": true,
+  "seats": [
+    {"rowLabel": "A", "seatNumber": 1, "seatPrice": 12.50, "seatType": "STANDARD"},
+    {"rowLabel": "A", "seatNumber": 2, "seatPrice": 12.50, "seatType": "STANDARD"},
+    {"rowLabel": "A", "seatNumber": 3, "seatPrice": 12.50, "seatType": "STANDARD"},
+    {"rowLabel": "A", "seatNumber": 4, "seatPrice": 12.50, "seatType": "STANDARD"},
+    {"rowLabel": "A", "seatNumber": 5, "seatPrice": 12.50, "seatType": "STANDARD"},
+    {"rowLabel": "B", "seatNumber": 1, "seatPrice": 12.50, "seatType": "STANDARD"},
+    {"rowLabel": "B", "seatNumber": 2, "seatPrice": 12.50, "seatType": "STANDARD"},
+    {"rowLabel": "B", "seatNumber": 3, "seatPrice": 12.50, "seatType": "STANDARD"},
+    {"rowLabel": "B", "seatNumber": 4, "seatPrice": 12.50, "seatType": "STANDARD"},
+    {"rowLabel": "B", "seatNumber": 5, "seatPrice": 12.50, "seatType": "STANDARD"}
+  ]
+}
+
+###
+POST http://localhost:8083/api/v1/auditoriums
+Content-Type: application/json
+
+{
+  "cinemaId": "REPLACE_WITH_CINEMA_ID",
+  "name": "Auditory 2",
+  "capacity": 10,
+  "active": true,
+  "seats": [
+    {"rowLabel": "C", "seatNumber": 1, "seatPrice": 14.00, "seatType": "VIP"},
+    {"rowLabel": "C", "seatNumber": 2, "seatPrice": 14.00, "seatType": "VIP"},
+    {"rowLabel": "C", "seatNumber": 3, "seatPrice": 14.00, "seatType": "VIP"},
+    {"rowLabel": "C", "seatNumber": 4, "seatPrice": 14.00, "seatType": "VIP"},
+    {"rowLabel": "C", "seatNumber": 5, "seatPrice": 14.00, "seatType": "VIP"},
+    {"rowLabel": "D", "seatNumber": 1, "seatPrice": 14.00, "seatType": "VIP"},
+    {"rowLabel": "D", "seatNumber": 2, "seatPrice": 14.00, "seatType": "VIP"},
+    {"rowLabel": "D", "seatNumber": 3, "seatPrice": 14.00, "seatType": "VIP"},
+    {"rowLabel": "D", "seatNumber": 4, "seatPrice": 14.00, "seatType": "VIP"},
+    {"rowLabel": "D", "seatNumber": 5, "seatPrice": 14.00, "seatType": "VIP"}
+  ]
+}

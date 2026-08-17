@@ -1,0 +1,57 @@
+@catalog-service=localhost:8083
+###
+POST http://{{catalog-service}}/api/v1/sessions
+Content-Type: application/json
+
+{
+  "auditoryId": "REPLACE_WITH_AUDITORY_ID_1",
+  "movieId": "REPLACE_WITH_MOVIE_ID_1",
+  "startsAt": "2026-08-01T18:00:00Z",
+  "endsAt": "2026-08-01T20:08:00Z",
+  "basePrice": 12.50,
+  "status": "SCHEDULED"
+}
+
+
+###
+POST http://{{catalog-service}}/api/v1/sessions
+Content-Type: application/json
+
+{
+  "auditoryId": "REPLACE_WITH_AUDITORY_ID_2",
+  "movieId": "REPLACE_WITH_MOVIE_ID_2",
+  "startsAt": "2026-08-01T20:30:00Z",
+  "endsAt": "2026-08-01T22:14:00Z",
+  "basePrice": 14.00,
+  "status": "SCHEDULED"
+}
+
+###
+POST http://{{catalog-service}}/api/v1/sessions
+Content-Type: application/json
+
+{
+  "auditoryId": "REPLACE_WITH_AUDITORY_ID_1",
+  "movieId": "REPLACE_WITH_MOVIE_ID_3",
+  "startsAt": "2026-08-02T16:00:00Z",
+  "endsAt": "2026-08-02T17:36:00Z",
+  "basePrice": 11.00,
+  "status": "SCHEDULED"
+}
+
+###
+POST http://{{catalog-service}}/api/v1/sessions
+Content-Type: application/json
+
+{
+  "auditoryId": "0b6bf792-94b7-4005-8c68-19e5c969c5d8",
+  "movieId": "f87d4870-2bac-4cfb-a902-69ed62ee9f40",
+  "startsAt": "{{$datetime iso8601 1 d}}",
+  "endsAt": "{{$datetime iso8601 26 h}}",
+  "basePrice": 14.00,
+  "status": "SCHEDULED"
+}
+
+###
+GET http://{{catalog-service}}/api/v1/sessions
+Content-Type: application/json

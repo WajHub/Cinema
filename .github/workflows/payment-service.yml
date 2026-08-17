@@ -1,4 +1,4 @@
-name: Catalog Service CI
+name: Payment Service CI
 
 on:
   workflow_dispatch:
