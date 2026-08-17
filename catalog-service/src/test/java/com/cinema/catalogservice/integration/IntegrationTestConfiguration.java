@@ -5,6 +5,7 @@ import com.cinema.catalogservice.repository.CinemaRepository;
 import com.cinema.catalogservice.repository.MovieRepository;
 import com.cinema.catalogservice.repository.OutboxEventRepository;
 import com.cinema.catalogservice.repository.SeatRepository;
+import com.cinema.catalogservice.repository.SessionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,11 +43,14 @@ class IntegrationTestConfiguration {
   @Autowired
   protected MovieRepository movieRepository;
   @Autowired
+  protected SessionRepository sessionRepository;
+  @Autowired
   protected OutboxEventRepository outboxEventRepository;
 
   @BeforeEach
   void cleanDatabase() {
     outboxEventRepository.deleteAllInBatch();
+    sessionRepository.deleteAllInBatch();
     seatRepository.deleteAllInBatch();
     auditoryRepository.deleteAllInBatch();
     movieRepository.deleteAllInBatch();
