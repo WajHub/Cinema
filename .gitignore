@@ -17,6 +17,7 @@ $RECYCLE.BIN/
 *.tfstate.*
 *.tfvars
 *.tfvars.json
+*.tfplan
 override.tf
 override.tf.json
 *_override.tf

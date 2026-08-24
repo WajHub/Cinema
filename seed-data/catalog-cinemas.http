@@ -1,5 +1,13 @@
-### Catalog service seed data
-POST http://localhost:8083/api/v1/cinemas
+--------------  GET  ------------------
+###
+GET http://{{catalog-service}}/api/v1/cinemas
+Content-Type: application/json
+
+
+
+--------------  POST  ------------------
+### 
+POST http://{{catalog-service}}/api/v1/cinemas
 Content-Type: application/json
 
 {
@@ -9,6 +17,3 @@ Content-Type: application/json
   "active": true
 }
 
-###
-GET http://localhost:8083/api/v1/cinemas
-Content-Type: application/json
