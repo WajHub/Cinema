@@ -16,7 +16,7 @@ resource "azurerm_container_group" "catalog" {
   }]
 
   container {
-    name         = "cr-cinema-catalog-service-dev-pl-03"
+    name         = "cr-cinema-catalog-service-dev-pl-01"
     image        = "crcinemadevpl01.azurecr.io/cinema-catalog-service:latest"
     cpu          = 1
     cpu_limit    = 1
@@ -24,9 +24,9 @@ resource "azurerm_container_group" "catalog" {
     memory_limit = 1.5
 
     environment_variables = {
-      BOOKING_DB_URL         = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/catalog_service"
-      BOOKING_DB_USERNAME    = "psqladmin"
-      BOOKING_DB_PASSWORD    = var.db_password
+      CATALOG_DB_URL         = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/catalog_service"
+      CATALOG_DB_USERNAME    = "psqladmin"
+      CATALOG_DB_PASSWORD    = var.db_password
       KAFKA_BOOTSTRAP_SERVER = var.kafka_server
       SCHEMA_REGISTRY_URL    = var.schema_registry_url
     }
