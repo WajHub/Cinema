@@ -1,5 +1,5 @@
 resource "azurerm_container_group" "catalog" {
-  name                = "cr-cinema-catalog-service-dev-pl-03"
+  name                = "cr-cinema-catalog-service-dev-pl-01"
   location            = "polandcentral"
   resource_group_name = "rg-cinema-dev-pl"
   ip_address_type     = "Public"
