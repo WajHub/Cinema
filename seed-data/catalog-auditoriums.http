@@ -1,9 +1,19 @@
+--------------  GET  ------------------
 ###
-POST http://localhost:8083/api/v1/auditoriums
+# @name getCinemas
+GET http://{{catalog-service}}/api/v1/cinemas
+Content-Type: application/json
+
+
+
+--------------  POST  ------------------
+
+###
+POST http://{{catalog-service}}/api/v1/auditoriums
 Content-Type: application/json
 
 {
-  "cinemaId": "REPLACE_WITH_CINEMA_ID",
+  "cinemaId": "{{getCinemas.response.body.$[0].id}}",
   "name": "Auditory 1",
   "capacity": 10,
   "active": true,
@@ -22,11 +32,11 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:8083/api/v1/auditoriums
+POST http://{{catalog-service}}/api/v1/auditoriums
 Content-Type: application/json
 
 {
-  "cinemaId": "REPLACE_WITH_CINEMA_ID",
+  "cinemaId": "{{getCinemas.response.body.$[0].id}}",
   "name": "Auditory 2",
   "capacity": 10,
   "active": true,

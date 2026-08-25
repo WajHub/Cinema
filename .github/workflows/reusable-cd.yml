@@ -1,0 +1,49 @@
+name: Shared CD template
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        required: true
+        type: string
+      service-path:
+        required: true
+        type: string
+
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 'Build and push image'
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ inputs.service-path }}
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_LOGIN_SERVER }}/cinema-${{ inputs.service-path }}:${{ github.sha }}
+            ${{ secrets.REGISTRY_LOGIN_SERVER }}/cinema-${{ inputs.service-path }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Restart ACI to pull new image
+        run: |
+          az container restart \
+            --name cr-cinema-${{ inputs.service-path }}-dev-pl-01 \
+            --resource-group rg-cinema-dev-pl
