@@ -27,3 +27,8 @@ variable "acr_password" {
   type      = string
   sensitive = true
 }
+
+variable "my_ip" {
+  type      = string
+  sensitive = true
+}
