@@ -16,3 +16,4 @@ jobs:
     with:
       service-name: 'Booking Service'
       service-path: 'booking-service'
+    secrets: inherit
