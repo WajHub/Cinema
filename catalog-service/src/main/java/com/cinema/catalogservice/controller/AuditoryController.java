@@ -51,9 +51,4 @@ public class AuditoryController {
   public void delete(@PathVariable UUID id) {
     auditoryService.delete(id);
   }
-
-  @GetMapping("/test")
-  public String getTest() {
-    return "Hello World";
-  }
 }
