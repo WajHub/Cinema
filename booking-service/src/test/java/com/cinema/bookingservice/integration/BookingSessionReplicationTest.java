@@ -62,7 +62,6 @@ class BookingSessionReplicationTest extends IntegrationTestConfiguration {
 
     BookingEntity booking = new BookingEntity();
     booking.setUser(user);
-    booking.setSession(session);
     booking.setTotalPrice(BigDecimal.valueOf(12.50));
     booking.setStatus("CONFIRMED");
     booking = bookingRepository.save(booking);
