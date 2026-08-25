@@ -16,3 +16,4 @@ jobs:
     with:
       service-name: 'Catalog Service'
       service-path: 'catalog-service'
+    secrets: inherit

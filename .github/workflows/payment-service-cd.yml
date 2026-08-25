@@ -16,3 +16,4 @@ jobs:
     with:
       service-name: 'Payment Service'
       service-path: 'payment-service'
+    secrets: inherit
