@@ -30,13 +30,17 @@ jobs:
           login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-      - run: |
-          docker build ./${{ inputs.service-path }} \
-            -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/cinema-${{ inputs.service-path }}:${{ github.sha }} \
-            -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/cinema-${{ inputs.service-path }}:latest
 
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/cinema-${{ inputs.service-path }}:${{ github.sha }}
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/cinema-${{ inputs.service-path }}:latest
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ inputs.service-path }}
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_LOGIN_SERVER }}/cinema-${{ inputs.service-path }}:${{ github.sha }}
+            ${{ secrets.REGISTRY_LOGIN_SERVER }}/cinema-${{ inputs.service-path }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Restart ACI to pull new image
         run: |
