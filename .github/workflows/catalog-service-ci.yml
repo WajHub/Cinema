@@ -6,11 +6,12 @@ on:
     branches: [ "main" ]
     paths:
       - 'catalog-service/**'
+      - '.github/workflows/reusable-ci.yml'
       - '.github/workflows/catalog-service.yml'
 
 jobs:
   run-shared-ci:
-    uses: ./.github/workflows/ci.yml
+    uses: ./.github/workflows/reusable-ci.yml
     with:
       service-name: 'Catalog Service'
       service-path: 'catalog-service'
