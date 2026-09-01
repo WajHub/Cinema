@@ -1,7 +1,7 @@
 package com.cinema.bookingservice.controller;
 
+import com.cinema.bookingservice.dto.BookingReservationResponse;
 import com.cinema.bookingservice.dto.SeatReservationRequest;
-import com.cinema.bookingservice.dto.SeatReservationResponse;
 import com.cinema.bookingservice.exception.DoubleBokingException;
 import com.cinema.bookingservice.service.SessionSeatService;
 import jakarta.validation.Valid;
@@ -17,16 +17,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/session-seats/{movieSessionId}/{sessionSeatId}")
+@RequestMapping("/api/v1/catalog-sessions/{catalogSessionId}/seats")
 public class SessionSeatController {
 
   private final SessionSeatService sessionSeatService;
 
   @PostMapping("/reserve")
-  public ResponseEntity<SeatReservationResponse> reserveSeat(@PathVariable UUID movieSessionId, @PathVariable UUID sessionSeatId,
+  public ResponseEntity<BookingReservationResponse> reserveSeats(@PathVariable UUID catalogSessionId,
       @Valid @RequestBody SeatReservationRequest request) {
     try {
-      SeatReservationResponse response = sessionSeatService.reserveSeat(movieSessionId, sessionSeatId, request.userId());
+      BookingReservationResponse response = sessionSeatService.reserveSeats(catalogSessionId, request.catalogSeatIds(), request.userId());
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(response);
     } catch (DoubleBokingException e) {

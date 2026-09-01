@@ -1,6 +1,7 @@
 package com.cinema.bookingservice.service;
 
-import com.cinema.bookingservice.dto.SeatReservationResponse;
+import com.cinema.bookingservice.dto.BookingReservationResponse;
+import com.cinema.bookingservice.dto.SeatResponse;
 import com.cinema.bookingservice.entity.BookingEntity;
 import com.cinema.bookingservice.entity.BookingStatus;
 import com.cinema.bookingservice.entity.MovieSessionEntity;
@@ -12,8 +13,11 @@ import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.MovieSessionRepository;
 import com.cinema.bookingservice.repository.SessionSeatRepository;
 import com.cinema.bookingservice.repository.UserRepository;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -33,8 +37,8 @@ public class SessionSeatService {
   private final MovieSessionRepository movieSessionRepository;
   private final UserRepository userRepository;
 
-  public SeatReservationResponse reserveSeat(UUID sessionId, UUID seatId, UUID userId) {
-    MovieSessionEntity session = movieSessionRepository.findById(sessionId)
+  public BookingReservationResponse reserveSeats(UUID catalogSessionId, List<UUID> catalogSeatIds, UUID userId) {
+    MovieSessionEntity session = movieSessionRepository.findByCatalogSessionId(catalogSessionId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
 
     OffsetDateTime now = OffsetDateTime.now();
@@ -48,37 +52,44 @@ public class SessionSeatService {
     UserEntity user = userRepository.findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-    SessionSeatEntity seat = session.getSessionSeatEntities()
-        .stream()
-        .filter(s -> s.getId()
-            .equals(seatId))
-        .findFirst()
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seat not found in this session"));
+    List<SessionSeatEntity> seats = catalogSeatIds.stream()
+        .map(catalogSeatId -> sessionSeatRepository.findByMovieSession_IdAndCatalogSeatId(session.getId(), catalogSeatId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seat " + catalogSeatId + " not found in session")))
+        .toList();
 
-    if (seat.getStatus() != SeatReservationStatus.AVAILABLE) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seat is not available for reservation");
-    }
+    seats.forEach(seat -> {
+      if (seat.getStatus() != SeatReservationStatus.AVAILABLE) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seat " + seat.getCatalogSeatId() + " is not available for reservation");
+      }
+    });
 
     try {
+      BigDecimal totalPrice = seats.stream()
+          .map(SessionSeatEntity::getFinalPrice)
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+
       BookingEntity booking = new BookingEntity();
       booking.setUser(user);
-      booking.setTotalPrice(seat.getFinalPrice());
+      booking.setTotalPrice(totalPrice);
       booking.setStatus(BookingStatus.PENDING);
-      booking = bookingRepository.save(booking);
+      BookingEntity savedBookingEntity = bookingRepository.save(booking);
 
-      seat.setStatus(SeatReservationStatus.TEMPORARY);
-      seat.setBooking(booking);
-      sessionSeatRepository.save(seat);
+      seats.forEach(seat -> {
+        seat.setStatus(SeatReservationStatus.TEMPORARY);
+        seat.setBooking(savedBookingEntity);
+      });
+      sessionSeatRepository.saveAll(seats);
 
-      return mapToResponse(seat);
+      return new BookingReservationResponse(booking.getId(), mapToSeatResponses(seats));
     } catch (OptimisticLockingFailureException e) {
-      throw new DoubleBokingException("Seat was reserved by another user. Please try again.", e);
+      throw new DoubleBokingException("One or more seats were reserved by another user. Please try again.", e);
     }
   }
 
-  private SeatReservationResponse mapToResponse(SessionSeatEntity seat) {
-    return new SeatReservationResponse(seat.getCatalogSeatId(), seat.getRowLabel(), seat.getSeatNumber(), seat.getFinalPrice(), seat.getStatus()
-        .name(), seat.getBooking() != null ? seat.getBooking()
-            .getId() : null);
+  private List<SeatResponse> mapToSeatResponses(List<SessionSeatEntity> seats) {
+    return seats.stream()
+        .map(seat -> new SeatResponse(seat.getCatalogSeatId(), seat.getRowLabel(), seat.getSeatNumber(), seat.getFinalPrice(), seat.getStatus()
+            .name()))
+        .collect(Collectors.toList());
   }
 }
