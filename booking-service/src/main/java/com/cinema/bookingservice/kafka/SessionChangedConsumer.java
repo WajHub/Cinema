@@ -3,6 +3,8 @@ package com.cinema.bookingservice.kafka;
 import com.cinema.bookingservice.repository.MovieSessionRepository;
 import com.cinema.bookingservice.repository.SessionSeatRepository;
 import com.cinema.kafka.event.SessionChangedEvent;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -23,25 +25,28 @@ public class MessageConsumer {
   @KafkaListener(topics = "${app.kafka.topics.catalog-events}", groupId = "${spring.kafka.consumer.group-id}")
   @Transactional
   public void listen(SessionChangedEvent message) {
-    movieSessionRepository.upsertSession(
-        UUID.randomUUID(),
-        UUID.fromString(message.getSessionId().toString()),
-        message.getMovieTitle().toString(),
-        java.time.OffsetDateTime.parse(message.getStartsAt().toString()),
-        java.time.OffsetDateTime.parse(message.getEndsAt().toString()));
+    movieSessionRepository.upsertSession( //
+        UUID.randomUUID(), //
+        UUID.fromString(message.getSessionId()), //
+        message.getMovieTitle(), //
+        OffsetDateTime.parse(message.getStartsAt()), //
+        OffsetDateTime.parse(message.getEndsAt()));//
 
-    if (message.getEventType().name().equals("CREATE")) {
-      UUID catalogSessionId = UUID.fromString(message.getSessionId().toString());
+    if (message.getEventType()
+        .name()
+        .equals("CREATE")) {
+      UUID catalogSessionId = UUID.fromString(message.getSessionId());
       UUID sessionId = movieSessionRepository.findByCatalogSessionId(catalogSessionId)
           .orElseThrow()
           .getId();
-      message.getSeats().forEach(seat -> sessionSeatRepository.upsertSeat(
-          UUID.randomUUID(),
-          sessionId,
-          UUID.fromString(seat.getSeatId().toString()),
-          seat.getRowLabel().toString(),
-          seat.getSeatNumber(),
-          new java.math.BigDecimal(seat.getPrice().toString())));
+      message.getSeats()
+          .forEach(seat -> sessionSeatRepository.upsertSeat //
+          (UUID.randomUUID(), //
+              sessionId, //
+              UUID.fromString(seat.getSeatId()), //
+              seat.getRowLabel(), //
+              seat.getSeatNumber(), //
+              new BigDecimal(seat.getPrice())));//
     }
     log.info("Replicated session {} with event {}", message.getSessionId(), message.getEventType());
   }
