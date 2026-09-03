@@ -10,7 +10,7 @@ import com.cinema.bookingservice.entity.SeatReservationStatus;
 import com.cinema.bookingservice.entity.SessionSeatEntity;
 import com.cinema.bookingservice.entity.UserEntity;
 import com.cinema.bookingservice.exception.DoubleBokingException;
-import com.cinema.bookingservice.kafka.event.PaymentStartedEventPayload;
+import com.cinema.kafka.event.PaymentStartedEvent;
 import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.MovieSessionRepository;
 import com.cinema.bookingservice.repository.OutboxEventRepository;
@@ -108,14 +108,14 @@ public class SessionSeatService {
           .map(UUID::toString)
           .collect(Collectors.toList());
 
-      PaymentStartedEventPayload payload = new PaymentStartedEventPayload(booking.getId()
-          .toString(), booking.getUser()
-              .getId()
-              .toString(), session.getCatalogSessionId()
-                  .toString(), catalogSeatIds, booking.getTotalPrice()
-                      .toPlainString(), booking.getTotalPrice()
-                          .toPlainString(), OffsetDateTime.now()
-                              .toString());
+      PaymentStartedEvent payload = PaymentStartedEvent.newBuilder()
+          .setBookingId(booking.getId().toString())
+          .setUserId(booking.getUser().getId().toString())
+          .setCatalogSessionId(session.getCatalogSessionId().toString())
+          .setCatalogSeatIds(catalogSeatIds)
+          .setTotalPrice(booking.getTotalPrice().toPlainString())
+          .setCreatedAt(OffsetDateTime.now().toString())
+          .build();
 
       OutboxEventEntity outboxEvent = new OutboxEventEntity();
       outboxEvent.setAggregateType("booking");

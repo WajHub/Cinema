@@ -14,7 +14,6 @@
         "items": "string"
       }
     },
-    { "name": "amount", "type": "string" },
     { "name": "totalPrice", "type": "string" },
     { "name": "createdAt", "type": "string" }
   ]

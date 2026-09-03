@@ -60,7 +60,6 @@ public class PaymentStartedProducer {
         .setUserId(root.path("userId").asText())
         .setCatalogSessionId(root.path("catalogSessionId").asText())
         .setCatalogSeatIds(catalogSeatIds)
-        .setAmount(root.path("amount").asText())
         .setTotalPrice(root.path("totalPrice").asText())
         .setCreatedAt(root.path("createdAt").asText())
         .build();
