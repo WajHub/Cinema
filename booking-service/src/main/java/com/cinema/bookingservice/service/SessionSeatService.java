@@ -50,7 +50,7 @@ public class SessionSeatService {
     OffsetDateTime cutoffTime = session.getEndsAt()
         .minusMinutes(MINUTES_BEFORE_SESSION_END);
 
-    if (now.isAfter(cutoffTime) && false) {
+    if (now.isAfter(cutoffTime)) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot reserve seats within 15 minutes of session end or after session has ended");
     }
 
@@ -82,7 +82,6 @@ public class SessionSeatService {
         seat.setStatus(SeatReservationStatus.TEMPORARY);
         seat.setBooking(savedBookingEntity);
       });
-      // Persist outbox event for payment processing
       persistPaymentStartedEvent(savedBookingEntity, session, seats);
 
       sessionSeatRepository.saveAll(seats);
