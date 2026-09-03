@@ -10,7 +10,7 @@ import com.cinema.bookingservice.entity.SeatReservationStatus;
 import com.cinema.bookingservice.entity.SessionSeatEntity;
 import com.cinema.bookingservice.entity.UserEntity;
 import com.cinema.bookingservice.exception.DoubleBokingException;
-import com.cinema.kafka.event.PaymentStartedEvent;
+import com.cinema.bookingservice.kafka.event.PaymentStartedEventPayload;
 import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.MovieSessionRepository;
 import com.cinema.bookingservice.repository.OutboxEventRepository;
@@ -21,7 +21,6 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -103,19 +102,16 @@ public class SessionSeatService {
 
   private void persistPaymentStartedEvent(BookingEntity booking, MovieSessionEntity session, List<SessionSeatEntity> seats) {
     try {
-      List<String> catalogSeatIds = seats.stream()
-          .map(SessionSeatEntity::getCatalogSeatId)
-          .map(UUID::toString)
-          .collect(Collectors.toList());
-
-      PaymentStartedEvent payload = PaymentStartedEvent.newBuilder()
-          .setBookingId(booking.getId().toString())
-          .setUserId(booking.getUser().getId().toString())
-          .setCatalogSessionId(session.getCatalogSessionId().toString())
-          .setCatalogSeatIds(catalogSeatIds)
-          .setTotalPrice(booking.getTotalPrice().toPlainString())
-          .setCreatedAt(OffsetDateTime.now().toString())
-          .build();
+      PaymentStartedEventPayload payload = new PaymentStartedEventPayload(booking.getId(), booking.getUser().getId(),
+          session
+              .getCatalogSessionId(),
+          seats.stream()
+              .map(SessionSeatEntity::getCatalogSeatId)
+              .toList(),
+          booking.getTotalPrice()
+              .toPlainString(),
+          OffsetDateTime.now()
+              .toString());
 
       OutboxEventEntity outboxEvent = new OutboxEventEntity();
       outboxEvent.setAggregateType("booking");

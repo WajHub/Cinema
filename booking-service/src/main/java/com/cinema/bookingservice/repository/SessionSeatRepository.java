@@ -2,6 +2,7 @@ package com.cinema.bookingservice.repository;
 
 import com.cinema.bookingservice.entity.SessionSeatEntity;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 public interface SessionSeatRepository extends JpaRepository<SessionSeatEntity, UUID> {
 
   Optional<SessionSeatEntity> findByMovieSession_IdAndCatalogSeatId(UUID sessionId, UUID catalogSeatId);
+
+  List<SessionSeatEntity> findByBooking_Id(UUID bookingId);
 
   @Modifying
   @Query(value = """

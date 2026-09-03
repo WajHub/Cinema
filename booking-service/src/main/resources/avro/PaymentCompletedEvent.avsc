@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "PaymentCompletedEvent",
+  "namespace": "com.cinema.kafka.event",
+  "fields": [
+    { "name": "paymentId", "type": "string" },
+    { "name": "bookingId", "type": "string" },
+    { "name": "totalPrice", "type": "string" },
+    { "name": "currency", "type": "string" },
+    { "name": "stripeCheckoutSessionId", "type": "string" },
+    { "name": "completedAt", "type": "string" },
+    { "name": "status", "type": "string" }
+  ]
+}
