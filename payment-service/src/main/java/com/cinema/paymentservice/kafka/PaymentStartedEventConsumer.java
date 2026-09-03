@@ -1,11 +1,13 @@
 package com.cinema.paymentservice.kafka;
 
-import com.cinema.kafka.event.PaymentCompletedEvent;
 import com.cinema.kafka.event.PaymentStartedEvent;
 import com.cinema.paymentservice.entity.PaymentEntity;
 import com.cinema.paymentservice.entity.PaymentStatusHistoryEntity;
+import com.cinema.paymentservice.entity.OutboxEventEntity;
+import com.cinema.paymentservice.kafka.event.PaymentCompletedEventPayload;
 import com.cinema.paymentservice.repository.PaymentRepository;
 import com.cinema.paymentservice.repository.PaymentStatusHistoryRepository;
+import com.cinema.paymentservice.repository.OutboxEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -13,7 +15,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,29 +28,31 @@ public class PaymentStartedEventConsumer {
 
   private final PaymentRepository paymentRepository;
   private final PaymentStatusHistoryRepository statusHistoryRepository;
-  private final KafkaTemplate<String, Object> kafkaTemplate;
   private final ObjectMapper objectMapper;
-
-  @Value("${app.kafka.topics.payment-completed}")
-  private String paymentCompletedTopic;
+  private final OutboxEventRepository outboxEventRepository;
 
   @KafkaListener(topics = "${app.kafka.topics.payment-started}")
   @Transactional
   public void consume(PaymentStartedEvent event) {
-    UUID bookingId = UUID.fromString(event.getBookingId().toString());
+      UUID bookingId = UUID.fromString(event.getBookingId()
+              .toString());
     if (paymentRepository.existsByBookingId(bookingId)) {
       return;
     }
 
     PaymentEntity payment = new PaymentEntity();
     payment.setBookingId(bookingId);
-    payment.setCatalogSessionId(UUID.fromString(event.getCatalogSessionId().toString()));
+    payment.setCatalogSessionId(UUID.fromString(event.getCatalogSessionId()
+            .toString()));
     payment.setCatalogSeatIds(writeSeatIds(event.getCatalogSeatIds()));
-    payment.setTotalPrice(new java.math.BigDecimal(event.getTotalPrice().toString()));
+    payment.setTotalPrice(new java.math.BigDecimal(event.getTotalPrice()
+            .toString()));
     payment.setCurrency(CURRENCY);
     payment.setCurrentStatus(IN_PROGRESS);
-    payment.setStripeCheckoutSessionId(UUID.randomUUID().toString());
-    payment.setStartedAt(OffsetDateTime.parse(event.getCreatedAt().toString()));
+    payment.setStripeCheckoutSessionId(UUID.randomUUID()
+            .toString());
+    payment.setStartedAt(OffsetDateTime.parse(event.getCreatedAt()
+            .toString()));
 
     PaymentEntity savedPayment = paymentRepository.save(payment);
     saveStatusHistory(savedPayment, IN_PROGRESS);
@@ -57,17 +60,24 @@ public class PaymentStartedEventConsumer {
     savedPayment.setCurrentStatus(COMPLETED);
     paymentRepository.save(savedPayment);
     saveStatusHistory(savedPayment, COMPLETED);
+    persistCompletedEvent(savedPayment);
+}
 
-    PaymentCompletedEvent completedEvent = PaymentCompletedEvent.newBuilder()
-        .setPaymentId(savedPayment.getId().toString())
-        .setBookingId(savedPayment.getBookingId().toString())
-        .setTotalPrice(savedPayment.getTotalPrice().toPlainString())
-        .setCurrency(savedPayment.getCurrency())
-        .setStripeCheckoutSessionId(savedPayment.getStripeCheckoutSessionId())
-        .setCompletedAt(OffsetDateTime.now().toString())
-        .setStatus(COMPLETED)
-        .build();
-    kafkaTemplate.send(paymentCompletedTopic, savedPayment.getBookingId().toString(), completedEvent);
+  private void persistCompletedEvent(PaymentEntity payment) {
+      try {
+          PaymentCompletedEventPayload payload = new PaymentCompletedEventPayload(
+                  payment.getId(), payment.getBookingId(), payment.getTotalPrice().toPlainString(),
+                  payment.getCurrency(), payment.getStripeCheckoutSessionId(),
+                  OffsetDateTime.now().toString(), COMPLETED);
+          OutboxEventEntity event = new OutboxEventEntity();
+          event.setAggregateType("payment");
+          event.setAggregateId(payment.getBookingId());
+          event.setType("PaymentCompletedEvent");
+          event.setPayload(objectMapper.writeValueAsString(payload));
+          outboxEventRepository.save(event);
+      } catch (Exception exception) {
+          throw new IllegalStateException("Failed to persist PaymentCompletedEvent to outbox", exception);
+      }
   }
 
   private void saveStatusHistory(PaymentEntity payment, String status) {
@@ -79,7 +89,9 @@ public class PaymentStartedEventConsumer {
 
   private String writeSeatIds(List<String> seatIds) {
     try {
-      return objectMapper.writeValueAsString(seatIds.stream().map(CharSequence::toString).toList());
+        return objectMapper.writeValueAsString(seatIds.stream()
+                .map(CharSequence::toString)
+                .toList());
     } catch (Exception exception) {
       throw new IllegalStateException("Failed to serialize catalog seat IDs", exception);
     }

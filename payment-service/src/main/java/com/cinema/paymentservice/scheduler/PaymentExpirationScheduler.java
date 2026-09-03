@@ -1,18 +1,18 @@
 package com.cinema.paymentservice.scheduler;
 
-import com.cinema.kafka.event.PaymentCancelledEvent;
 import com.cinema.paymentservice.entity.PaymentEntity;
 import com.cinema.paymentservice.entity.PaymentStatusHistoryEntity;
+import com.cinema.paymentservice.entity.OutboxEventEntity;
+import com.cinema.paymentservice.kafka.event.PaymentCancelledEventPayload;
 import com.cinema.paymentservice.repository.PaymentRepository;
 import com.cinema.paymentservice.repository.PaymentStatusHistoryRepository;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.cinema.paymentservice.repository.OutboxEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,14 +26,11 @@ public class PaymentExpirationScheduler {
 
   private final PaymentRepository paymentRepository;
   private final PaymentStatusHistoryRepository statusHistoryRepository;
-  private final KafkaTemplate<String, Object> kafkaTemplate;
   private final ObjectMapper objectMapper;
+  private final OutboxEventRepository outboxEventRepository;
 
   @Value("${app.payment.expiration-minutes:15}")
   private long expirationMinutes;
-
-  @Value("${app.kafka.topics.payment-cancelled}")
-  private String paymentCancelledTopic;
 
   @Scheduled(fixedDelayString = "${app.payment.expiration-poll-delay-ms:30000}")
   @Transactional
@@ -51,27 +48,32 @@ public class PaymentExpirationScheduler {
       history.setStatus(CANCELLED);
       statusHistoryRepository.save(history);
 
-      PaymentCancelledEvent cancelledEvent = PaymentCancelledEvent.newBuilder()
-          .setPaymentId(payment.getId().toString())
-          .setBookingId(payment.getBookingId().toString())
-          .setCatalogSessionId(payment.getCatalogSessionId().toString())
-          .setCatalogSeatIds(readSeatIds(payment.getCatalogSeatIds()))
-          .setTotalPrice(payment.getTotalPrice().toPlainString())
-          .setCurrency(payment.getCurrency())
-          .setStripeCheckoutSessionId(payment.getStripeCheckoutSessionId())
-          .setCancelledAt(OffsetDateTime.now().toString())
-          .setReason("Payment expired after " + expirationMinutes + " minutes")
-          .setStatus(CANCELLED)
-          .build();
-      kafkaTemplate.send(paymentCancelledTopic, payment.getBookingId().toString(), cancelledEvent);
+      persistCancelledEvent(payment);
+  }
+}
+
+private void persistCancelledEvent(PaymentEntity payment) {
+  try {
+      PaymentCancelledEventPayload payload = new PaymentCancelledEventPayload(
+              payment.getId(), payment.getBookingId(), payment.getCatalogSessionId(),
+              readSeatIds(payment.getCatalogSeatIds()), payment.getTotalPrice().toPlainString(),
+              payment.getCurrency(), payment.getStripeCheckoutSessionId(), OffsetDateTime.now().toString(),
+              "Payment expired after " + expirationMinutes + " minutes", CANCELLED);
+      OutboxEventEntity event = new OutboxEventEntity();
+      event.setAggregateType("payment");
+      event.setAggregateId(payment.getBookingId());
+      event.setType("PaymentCancelledEvent");
+      event.setPayload(objectMapper.writeValueAsString(payload));
+      outboxEventRepository.save(event);
+  } catch (Exception exception) {
+      throw new IllegalStateException("Failed to persist PaymentCancelledEvent to outbox", exception);
     }
   }
 
   private List<String> readSeatIds(String serializedSeatIds) {
     try {
       List<String> seatIds = new ArrayList<>();
-      JsonNode root = objectMapper.readTree(serializedSeatIds);
-      for (JsonNode seatId : root) {
+      for (var seatId : objectMapper.readTree(serializedSeatIds)) {
         seatIds.add(seatId.asText());
       }
       return seatIds;
