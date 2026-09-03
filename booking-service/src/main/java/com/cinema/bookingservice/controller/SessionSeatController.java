@@ -17,16 +17,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/catalog-sessions/{catalogSessionId}/seats")
+@RequestMapping("/api/v1/session-seats/{movieSessionId}")
 public class SessionSeatController {
 
   private final SessionSeatService sessionSeatService;
 
   @PostMapping("/reserve")
-  public ResponseEntity<BookingReservationResponse> reserveSeats(@PathVariable UUID catalogSessionId,
+  public ResponseEntity<BookingReservationResponse> reserveSeats(@PathVariable UUID movieSessionId,
       @Valid @RequestBody SeatReservationRequest request) {
     try {
-      BookingReservationResponse response = sessionSeatService.reserveSeats(catalogSessionId, request.catalogSeatIds(), request.userId());
+      BookingReservationResponse response = sessionSeatService.reserveSeats(movieSessionId, request.catalogSeatIds(), request.userId());
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(response);
     } catch (DoubleBokingException e) {

@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -37,8 +36,8 @@ public class SessionSeatService {
   private final MovieSessionRepository movieSessionRepository;
   private final UserRepository userRepository;
 
-  public BookingReservationResponse reserveSeats(UUID catalogSessionId, List<UUID> catalogSeatIds, UUID userId) {
-    MovieSessionEntity session = movieSessionRepository.findByCatalogSessionId(catalogSessionId)
+  public BookingReservationResponse reserveSeats(UUID movieSessionId, List<UUID> sessionSeatIds, UUID userId) {
+    MovieSessionEntity session = movieSessionRepository.findById(movieSessionId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
 
     OffsetDateTime now = OffsetDateTime.now();
@@ -52,11 +51,10 @@ public class SessionSeatService {
     UserEntity user = userRepository.findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-    List<SessionSeatEntity> seats = catalogSeatIds.stream()
-        .map(catalogSeatId -> sessionSeatRepository.findByMovieSession_IdAndCatalogSeatId(session.getId(), catalogSeatId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seat " + catalogSeatId + " not found in session")))
+    List<SessionSeatEntity> seats = session.getSessionSeatEntities()
+        .stream()
+        .filter(sessionSeatEntity -> sessionSeatIds.contains(sessionSeatEntity.getId()))
         .toList();
-
     seats.forEach(seat -> {
       if (seat.getStatus() != SeatReservationStatus.AVAILABLE) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seat " + seat.getCatalogSeatId() + " is not available for reservation");
@@ -90,6 +88,6 @@ public class SessionSeatService {
     return seats.stream()
         .map(seat -> new SeatResponse(seat.getCatalogSeatId(), seat.getRowLabel(), seat.getSeatNumber(), seat.getFinalPrice(), seat.getStatus()
             .name()))
-        .collect(Collectors.toList());
+        .toList();
   }
 }
