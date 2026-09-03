@@ -22,6 +22,25 @@
 - **Infrastructure:** Docker, Terraform (Azure deployment), PostgreSQL, Kafka (KRaft mode)
 - **CI/CD:** GitHub Actions with reusable workflows
 
+### Booking and Seat Statuses
+- `BookingStatus` describes the complete booking lifecycle:
+  - `PENDING`: payment is awaiting processing
+  - `CONFIRMED`: payment completed
+  - `CANCELLED`: payment failed or expired
+- `SeatReservationStatus` describes individual seats:
+  - `AVAILABLE -> TEMPORARY -> CONFIRMED`
+  - `TEMPORARY -> AVAILABLE` when payment is cancelled or expires
+- Payment result consumers must update the booking and all seats in the same transaction.
+
+### Idempotent Event Consumers
+- Duplicate payment events must not create duplicate payments, status transitions, seat updates, or history records.
+- A payment booking has at most one payment attempt, enforced by a database unique constraint on `payment.booking_id`.
+
+### Payment Expiration
+- Payment expiration is calculated from the timestamp included in `PaymentStartedEvent`, persisted as `started_at`.
+- Do not use message-consumption time as the start of the expiration window.
+- Expiration duration and scheduler polling interval must be configurable through application properties.
+
 ---
 
 ## Project Layout
@@ -39,17 +58,21 @@ Each service follows a consistent pattern:
 │   │   ├── repository/                       # Spring Data repositories
 │   │   ├── service/                          # Business logic
 │   │   ├── controller/                       # REST endpoints
+│   │   ├── config/                            # Application and Kafka configuration
+│   │   ├── kafka/                             # Kafka consumers, producers, and publishers
+│   │   │   └── event/                         # Plain event payload records for outbox JSON
 │   │   └── *Application.java                 # Spring Boot main class
 │   └── resources/
 │       ├── application.properties             # Service configuration
-│       └── db/migration/                     # Flyway SQL migrations (V1__init_schema.sql)
+│       ├── avro/                              # Avro schemas for Kafka contracts
+│       └── db/migration/                      # Flyway SQL migrations
 └── src/test/java/                            # Integration tests with TestContainers
 ```
 
 **Services:**
 - **catalog-service** (port 8083): Movies, cinemas, auditoriums, sessions management
 - **booking-service** (port 8082): Ticket reservations and seat management  
-- **payment-service** (port 8084): Payment processing and refunds
+- **payment-service** (port 8082): Payment processing and refunds
 
 ### Infrastructure & Configuration
 ```
