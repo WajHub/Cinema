@@ -1,41 +1,21 @@
 {
   "type": "record",
-  "name": "SessionChangedEvent",
+  "name": "PaymentStartedEvent",
   "namespace": "com.cinema.kafka.event",
-  "doc": "Session replication event for catalog-to-booking synchronization",
+  "doc": "Event for when a payment is started for a booking",
   "fields": [
+    { "name": "bookingId", "type": "string" },
+    { "name": "userId", "type": "string" },
+    { "name": "catalogSessionId", "type": "string" },
     {
-      "name": "eventType",
-      "type": {
-        "type": "enum",
-        "name": "SessionChangedEventType",
-        "symbols": ["CREATE", "UPDATE"]
-      }
-    },
-    { "name": "sessionId", "type": "string" },
-    { "name": "auditoryId", "type": "string" },
-    { "name": "auditoryName", "type": "string" },
-    { "name": "movieId", "type": "string" },
-    { "name": "movieTitle", "type": "string" },
-    { "name": "startsAt", "type": "string" },
-    { "name": "endsAt", "type": "string" },
-    { "name": "status", "type": "string" },
-    { "name": "basePrice", "type": "string" },
-    {
-      "name": "seats",
+      "name": "catalogSeatIds",
       "type": {
         "type": "array",
-        "items": {
-          "type": "record",
-          "name": "SessionChangedEventSeat",
-          "fields": [
-            { "name": "seatId", "type": "string" },
-            { "name": "rowLabel", "type": "string" },
-            { "name": "seatNumber", "type": "int" },
-            { "name": "price", "type": "string" }
-          ]
-        }
+        "items": "string"
       }
-    }
+    },
+    { "name": "amount", "type": "string" },
+    { "name": "totalPrice", "type": "string" },
+    { "name": "createdAt", "type": "string" }
   ]
 }

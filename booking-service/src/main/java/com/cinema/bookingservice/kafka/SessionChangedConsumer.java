@@ -15,9 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class MessageConsumer {
+public class SessionChangedConsumer {
 
-  private static final Logger log = LoggerFactory.getLogger(MessageConsumer.class);
+  private static final Logger log = LoggerFactory.getLogger(SessionChangedConsumer.class);
 
   private final MovieSessionRepository movieSessionRepository;
   private final SessionSeatRepository sessionSeatRepository;
