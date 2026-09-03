@@ -1,7 +1,5 @@
 package com.cinema.paymentservice.entity;
 
-import java.time.LocalDateTime;
-import org.hibernate.annotations.CreationTimestamp;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -11,9 +9,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Getter
 @Setter
@@ -33,8 +34,8 @@ public class RefundEntity {
   @Column(name = "stripe_refund_id", nullable = false, unique = true)
   private String stripeRefundId;
 
-  @Column(nullable = false)
-  private Long amount;
+  @Column(name = "total_price", nullable = false, precision = 19, scale = 2)
+  private BigDecimal totalPrice;
 
   @Column(nullable = false, length = 32)
   private String status;
