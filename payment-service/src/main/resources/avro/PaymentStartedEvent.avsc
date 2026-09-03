@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "PaymentStartedEvent",
+  "namespace": "com.cinema.kafka.event",
+  "fields": [
+    { "name": "bookingId", "type": "string" },
+    { "name": "userId", "type": "string" },
+    { "name": "catalogSessionId", "type": "string" },
+    { "name": "catalogSeatIds", "type": { "type": "array", "items": "string" } },
+    { "name": "totalPrice", "type": "string" },
+    { "name": "createdAt", "type": "string" }
+  ]
+}
