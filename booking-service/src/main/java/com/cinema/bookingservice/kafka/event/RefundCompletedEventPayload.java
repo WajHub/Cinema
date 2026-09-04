@@ -1,4 +1,4 @@
-package com.cinema.paymentservice.kafka.event;
+package com.cinema.bookingservice.kafka.event;
 
 import java.util.UUID;
 import lombok.Builder;

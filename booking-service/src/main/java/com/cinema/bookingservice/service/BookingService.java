@@ -57,8 +57,15 @@ public class BookingService {
   }
 
   private SeatResponse toSeatResponse(SessionSeatEntity seat) {
-    return new SeatResponse(seat.getCatalogSeatId(), seat.getRowLabel(), seat.getSeatNumber(), seat.getFinalPrice(), seat.getStatus()
-        .name());
+    return SeatResponse.builder()
+        .sessionSeatId(seat.getId())
+        .catalogSeatId(seat.getCatalogSeatId())
+        .rowLabel(seat.getRowLabel())
+        .seatNumber(seat.getSeatNumber())
+        .finalPrice(seat.getFinalPrice())
+        .status(seat.getStatus()
+            .name())
+        .build();
   }
 
   public void cancelBooking(UUID bookingId) {
@@ -76,8 +83,7 @@ public class BookingService {
     var validTimeForRefund = OffsetDateTime.now()
         .plusMinutes(minMinutesBeforeSessionForRefund);
     if (movieStartTime.isBefore(validTimeForRefund) && false) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Cannot refund booking before 15 minutes of session start");
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot refund booking before 15 minutes of session start");
     }
     persistRefundStartedEvent(booking);
   }

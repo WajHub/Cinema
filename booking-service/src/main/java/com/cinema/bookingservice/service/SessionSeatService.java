@@ -50,7 +50,7 @@ public class SessionSeatService {
     OffsetDateTime cutoffTime = session.getEndsAt()
         .minusMinutes(MINUTES_BEFORE_SESSION_END);
 
-    if (now.isAfter(cutoffTime)) {
+    if (now.isAfter(cutoffTime) && false) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot reserve seats within 15 minutes of session end or after session has ended");
     }
 
@@ -94,23 +94,26 @@ public class SessionSeatService {
 
   private List<SeatResponse> mapToSeatResponses(List<SessionSeatEntity> seats) {
     return seats.stream()
-        .map(seat -> new SeatResponse(seat.getCatalogSeatId(), seat.getRowLabel(), seat.getSeatNumber(), seat.getFinalPrice(), seat.getStatus()
-            .name()))
+        .map(seat -> SeatResponse.builder()
+            .sessionSeatId(seat.getId())
+            .catalogSeatId(seat.getCatalogSeatId())
+            .rowLabel(seat.getRowLabel())
+            .seatNumber(seat.getSeatNumber())
+            .finalPrice(seat.getFinalPrice())
+            .status(seat.getStatus()
+                .name())
+            .build())
         .toList();
   }
 
   private void persistPaymentStartedEvent(BookingEntity booking, MovieSessionEntity session, List<SessionSeatEntity> seats) {
     try {
-      PaymentStartedEventPayload payload = new PaymentStartedEventPayload(booking.getId(), booking.getUser().getId(),
-          session
-              .getCatalogSessionId(),
-          seats.stream()
+      PaymentStartedEventPayload payload = new PaymentStartedEventPayload(booking.getId(), booking.getUser()
+          .getId(), session.getCatalogSessionId(), seats.stream()
               .map(SessionSeatEntity::getCatalogSeatId)
-              .toList(),
-          booking.getTotalPrice()
-              .toPlainString(),
-          OffsetDateTime.now()
-              .toString());
+              .toList(), booking.getTotalPrice()
+                  .toPlainString(), OffsetDateTime.now()
+                      .toString());
 
       OutboxEventEntity outboxEvent = new OutboxEventEntity();
       outboxEvent.setAggregateType("booking");
