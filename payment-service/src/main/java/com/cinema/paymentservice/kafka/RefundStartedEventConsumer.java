@@ -3,8 +3,8 @@ package com.cinema.paymentservice.kafka;
 import com.cinema.kafka.event.RefundCompletedEvent;
 import com.cinema.kafka.event.RefundStartedEvent;
 import com.cinema.paymentservice.entity.OutboxEventEntity;
-import com.cinema.paymentservice.entity.RefundEntity;
 import com.cinema.paymentservice.entity.PaymentStatus;
+import com.cinema.paymentservice.entity.RefundEntity;
 import com.cinema.paymentservice.entity.RefundStatus;
 import com.cinema.paymentservice.repository.OutboxEventRepository;
 import com.cinema.paymentservice.repository.PaymentRepository;
@@ -45,7 +45,8 @@ public class RefundStartedEventConsumer {
     refund.setPayment(payment);
     refund.setStatus(IN_PROGRESS);
     refund.setTotalPrice(payment.getTotalPrice());
-    refund.setCurrency(event.getCurrency().toString());
+    refund.setCurrency(event.getCurrency()
+        .toString());
     refundRepository.save(refund);
 
     payment.setCurrentStatus(PaymentStatus.REFUND_PENDING);
@@ -61,14 +62,12 @@ public class RefundStartedEventConsumer {
   private void persistCompletedEvent(RefundEntity refund) {
     try {
       RefundCompletedEvent payload = new RefundCompletedEvent(refund.getId()
-          .toString(),
-          refund.getTotalPrice()
-              .toPlainString(),
-          OffsetDateTime.now()
-              .toString());
+          .toString(), refund.getTotalPrice()
+              .toPlainString(), OffsetDateTime.now()
+                  .toString());
       OutboxEventEntity event = new OutboxEventEntity();
       event.setAggregateType("refund");
-      // event.setAggregateId();
+      event.setAggregateId(refund.getId());
       event.setType("RefundCompletedEvent");
       event.setPayload(objectMapper.writeValueAsString(payload));
       outboxEventRepository.save(event);
