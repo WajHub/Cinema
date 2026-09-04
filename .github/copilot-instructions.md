@@ -139,6 +139,9 @@ docker/postgres/init/
   - Deletes successfully published events atomically
 - **Configuration:** Outbox polling delay is configurable per environment via `app.outbox.poll-delay-ms` property (tests use higher delays like 600000ms to disable auto-polling)
 
+### Coding Standards
+- **Lombok:** Use Project Lombok annotations (e.g., `@Data`, `@Builder`, `@RequiredArgsConstructor`, `@Slf4j`) wherever possible to eliminate boilerplate code across entities, DTOs, services, and configuration classes.
+
 ---
 
 ## When Starting Any Task

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 public record PaymentCancelledEventPayload(
-    Long paymentId,
+        UUID paymentId,
     UUID bookingId,
     UUID catalogSessionId,
     List<String> catalogSeatIds,

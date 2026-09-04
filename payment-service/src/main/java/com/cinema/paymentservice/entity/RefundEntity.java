@@ -9,6 +9,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import java.util.UUID;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -24,8 +27,8 @@ import org.hibernate.annotations.CreationTimestamp;
 public class RefundEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "payment_id", nullable = false)
@@ -38,7 +41,11 @@ public class RefundEntity {
   private BigDecimal totalPrice;
 
   @Column(nullable = false, length = 32)
-  private String status;
+  @Enumerated(EnumType.STRING)
+  private RefundStatus status;
+
+  @Column(nullable = false, length = 16)
+  private String currency;
 
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)

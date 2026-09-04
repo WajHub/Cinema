@@ -1,6 +1,7 @@
 package com.cinema.paymentservice.scheduler;
 
 import com.cinema.paymentservice.entity.PaymentEntity;
+import com.cinema.paymentservice.entity.PaymentStatus;
 import com.cinema.paymentservice.entity.PaymentStatusHistoryEntity;
 import com.cinema.paymentservice.entity.OutboxEventEntity;
 import com.cinema.paymentservice.kafka.event.PaymentCancelledEventPayload;
@@ -21,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PaymentExpirationScheduler {
 
-  private static final String IN_PROGRESS = "in_progress";
-  private static final String CANCELLED = "cancelled";
+  private static final PaymentStatus IN_PROGRESS = PaymentStatus.IN_PROGRESS;
+  private static final PaymentStatus CANCELLED = PaymentStatus.CANCELLED;
 
   private final PaymentRepository paymentRepository;
   private final PaymentStatusHistoryRepository statusHistoryRepository;
@@ -58,7 +59,7 @@ private void persistCancelledEvent(PaymentEntity payment) {
               payment.getId(), payment.getBookingId(), payment.getCatalogSessionId(),
               readSeatIds(payment.getCatalogSeatIds()), payment.getTotalPrice().toPlainString(),
               payment.getCurrency(), payment.getStripeCheckoutSessionId(), OffsetDateTime.now().toString(),
-              "Payment expired after " + expirationMinutes + " minutes", CANCELLED);
+          "Payment expired after " + expirationMinutes + " minutes", CANCELLED.name().toLowerCase());
       OutboxEventEntity event = new OutboxEventEntity();
       event.setAggregateType("payment");
       event.setAggregateId(payment.getBookingId());

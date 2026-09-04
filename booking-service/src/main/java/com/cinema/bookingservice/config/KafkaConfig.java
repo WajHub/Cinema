@@ -13,15 +13,18 @@ public class KafkaConfig {
   private final String paymentStartedTopic;
   private final String paymentCompletedTopic;
   private final String paymentCancelledTopic;
+  private final String refundStartedTopic;
 
   public KafkaConfig(@Value("${app.kafka.topics.catalog-events}") String catalogEventsTopic,
       @Value("${app.kafka.topics.payment-started}") String paymentStartedTopic,
       @Value("${app.kafka.topics.payment-completed}") String paymentCompletedTopic,
-      @Value("${app.kafka.topics.payment-cancelled}") String paymentCancelledTopic) {
+      @Value("${app.kafka.topics.payment-cancelled}") String paymentCancelledTopic,
+      @Value("${app.kafka.topics.refund-started}") String refundStartedTopic) {
     this.catalogEventsTopic = catalogEventsTopic;
     this.paymentStartedTopic = paymentStartedTopic;
     this.paymentCompletedTopic = paymentCompletedTopic;
     this.paymentCancelledTopic = paymentCancelledTopic;
+    this.refundStartedTopic = refundStartedTopic;
   }
 
   @Bean
@@ -35,11 +38,7 @@ public class KafkaConfig {
 
   @Bean
   public NewTopic setupPaymentStartedTopic() {
-    return TopicBuilder.name(paymentStartedTopic)
-        .partitions(3)
-        .replicas(1)
-        .config(TopicConfig.RETENTION_MS_CONFIG, "86400000")
-        .build();
+    return buildTopic(paymentStartedTopic);
   }
 
   @Bean
@@ -50,6 +49,11 @@ public class KafkaConfig {
   @Bean
   public NewTopic setupPaymentCancelledTopic() {
     return buildTopic(paymentCancelledTopic);
+  }
+
+  @Bean
+  public NewTopic setupRefundStartedTopic() {
+    return buildTopic(refundStartedTopic);
   }
 
   private NewTopic buildTopic(String topic) {

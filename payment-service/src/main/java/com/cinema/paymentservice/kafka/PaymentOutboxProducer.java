@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PaymentOutboxPublisher {
+public class PaymentOutboxProducer {
 
   private static final int BATCH_SIZE = 50;
   private static final String COMPLETED_EVENT = "PaymentCompletedEvent";
@@ -53,7 +53,8 @@ public class PaymentOutboxPublisher {
           throw new IllegalStateException("Unsupported payment outbox event type: " + event.getType());
         }
 
-        kafkaTemplate.send(topic, event.getAggregateId().toString(), kafkaEvent);
+        kafkaTemplate.send(topic, event.getAggregateId()
+            .toString(), kafkaEvent);
         outboxEventRepository.deleteById(event.getId());
       } catch (Exception exception) {
         log.error("Failed to publish payment outbox event {}", event.getId(), exception);
@@ -65,13 +66,20 @@ public class PaymentOutboxPublisher {
   private PaymentCompletedEvent toCompletedEvent(OutboxEventEntity event) throws Exception {
     JsonNode root = objectMapper.readTree(event.getPayload());
     return PaymentCompletedEvent.newBuilder()
-        .setPaymentId(root.path("paymentId").asText())
-        .setBookingId(root.path("bookingId").asText())
-        .setTotalPrice(root.path("totalPrice").asText())
-        .setCurrency(root.path("currency").asText())
-        .setStripeCheckoutSessionId(root.path("stripeCheckoutSessionId").asText())
-        .setCompletedAt(root.path("completedAt").asText())
-        .setStatus(root.path("status").asText())
+        .setPaymentId(root.path("paymentId")
+            .asText())
+        .setBookingId(root.path("bookingId")
+            .asText())
+        .setTotalPrice(root.path("totalPrice")
+            .asText())
+        .setCurrency(root.path("currency")
+            .asText())
+        .setStripeCheckoutSessionId(root.path("stripeCheckoutSessionId")
+            .asText())
+        .setCompletedAt(root.path("completedAt")
+            .asText())
+        .setStatus(root.path("status")
+            .asText())
         .build();
   }
 
@@ -83,16 +91,25 @@ public class PaymentOutboxPublisher {
     }
 
     return PaymentCancelledEvent.newBuilder()
-        .setPaymentId(root.path("paymentId").asText())
-        .setBookingId(root.path("bookingId").asText())
-        .setCatalogSessionId(root.path("catalogSessionId").asText())
+        .setPaymentId(root.path("paymentId")
+            .asText())
+        .setBookingId(root.path("bookingId")
+            .asText())
+        .setCatalogSessionId(root.path("catalogSessionId")
+            .asText())
         .setCatalogSeatIds(catalogSeatIds)
-        .setTotalPrice(root.path("totalPrice").asText())
-        .setCurrency(root.path("currency").asText())
-        .setStripeCheckoutSessionId(root.path("stripeCheckoutSessionId").asText())
-        .setCancelledAt(root.path("cancelledAt").asText())
-        .setReason(root.path("reason").asText())
-        .setStatus(root.path("status").asText())
+        .setTotalPrice(root.path("totalPrice")
+            .asText())
+        .setCurrency(root.path("currency")
+            .asText())
+        .setStripeCheckoutSessionId(root.path("stripeCheckoutSessionId")
+            .asText())
+        .setCancelledAt(root.path("cancelledAt")
+            .asText())
+        .setReason(root.path("reason")
+            .asText())
+        .setStatus(root.path("status")
+            .asText())
         .build();
   }
 }

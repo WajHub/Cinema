@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -24,8 +26,8 @@ import org.hibernate.type.SqlTypes;
 public class PaymentEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
   @Column(name = "stripe_payment_intent_id", unique = true)
   private String stripePaymentIntentId;
@@ -39,8 +41,9 @@ public class PaymentEntity {
   @Column(nullable = false, length = 16)
   private String currency;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "current_status", nullable = false, length = 32)
-  private String currentStatus;
+  private PaymentStatus currentStatus;
 
   @Column(name = "booking_id", nullable = false)
   private UUID bookingId;

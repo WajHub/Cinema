@@ -2,6 +2,7 @@ package com.cinema.paymentservice.kafka;
 
 import com.cinema.kafka.event.PaymentStartedEvent;
 import com.cinema.paymentservice.entity.PaymentEntity;
+import com.cinema.paymentservice.entity.PaymentStatus;
 import com.cinema.paymentservice.entity.PaymentStatusHistoryEntity;
 import com.cinema.paymentservice.entity.OutboxEventEntity;
 import com.cinema.paymentservice.kafka.event.PaymentCompletedEventPayload;
@@ -22,8 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PaymentStartedEventConsumer {
 
-  private static final String IN_PROGRESS = "in_progress";
-  private static final String COMPLETED = "completed";
+        private static final PaymentStatus IN_PROGRESS = PaymentStatus.IN_PROGRESS;
+        private static final PaymentStatus COMPLETED = PaymentStatus.COMPLETED;
   private static final String CURRENCY = "PLN";
 
   private final PaymentRepository paymentRepository;
@@ -68,7 +69,7 @@ public class PaymentStartedEventConsumer {
           PaymentCompletedEventPayload payload = new PaymentCompletedEventPayload(
                   payment.getId(), payment.getBookingId(), payment.getTotalPrice().toPlainString(),
                   payment.getCurrency(), payment.getStripeCheckoutSessionId(),
-                  OffsetDateTime.now().toString(), COMPLETED);
+                          OffsetDateTime.now().toString(), COMPLETED.name().toLowerCase());
           OutboxEventEntity event = new OutboxEventEntity();
           event.setAggregateType("payment");
           event.setAggregateId(payment.getBookingId());
@@ -80,7 +81,7 @@ public class PaymentStartedEventConsumer {
       }
   }
 
-  private void saveStatusHistory(PaymentEntity payment, String status) {
+  private void saveStatusHistory(PaymentEntity payment, PaymentStatus status) {
     PaymentStatusHistoryEntity history = new PaymentStatusHistoryEntity();
     history.setPayment(payment);
     history.setStatus(status);
