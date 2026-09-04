@@ -15,4 +15,6 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, UUID> {
   List<PaymentEntity> findByCurrentStatusAndStartedAtBefore(PaymentStatus currentStatus, OffsetDateTime startedAt);
 
   Optional<PaymentEntity> findByBookingIdAndCurrentStatus(UUID bookingId, PaymentStatus status);
+
+  Optional<PaymentEntity> findByBookingId(UUID bookingId);
 }

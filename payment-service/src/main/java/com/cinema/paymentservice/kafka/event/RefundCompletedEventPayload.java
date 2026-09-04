@@ -6,7 +6,6 @@ import lombok.Builder;
 @Builder
 public record RefundCompletedEventPayload( //
     UUID bookingId, //
-    UUID userId, //
     String totalPrice, //
     String createdAt //
 ) {

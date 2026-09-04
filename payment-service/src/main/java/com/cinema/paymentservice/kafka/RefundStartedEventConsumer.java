@@ -1,11 +1,11 @@
 package com.cinema.paymentservice.kafka;
 
-import com.cinema.kafka.event.RefundCompletedEvent;
 import com.cinema.kafka.event.RefundStartedEvent;
 import com.cinema.paymentservice.entity.OutboxEventEntity;
 import com.cinema.paymentservice.entity.PaymentStatus;
 import com.cinema.paymentservice.entity.RefundEntity;
 import com.cinema.paymentservice.entity.RefundStatus;
+import com.cinema.paymentservice.kafka.event.RefundCompletedEventPayload;
 import com.cinema.paymentservice.repository.OutboxEventRepository;
 import com.cinema.paymentservice.repository.PaymentRepository;
 import com.cinema.paymentservice.repository.RefundRepository;
@@ -14,6 +14,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
@@ -29,23 +30,25 @@ public class RefundStartedEventConsumer {
   private final OutboxEventRepository outboxEventRepository;
 
   @KafkaListener(topics = "${app.kafka.topics.refund-started}")
+  @Transactional
   public void consume(RefundStartedEvent event) {
     UUID bookingId = UUID.fromString(event.getBookingId()
         .toString());
-    var payment = paymentRepository.findByBookingIdAndCurrentStatus(bookingId, PaymentStatus.COMPLETED)
+    var payment = paymentRepository.findByBookingId(bookingId)
         .orElseThrow();
-    if (refundRepository.existsByPaymentIdAndStatus(payment.getId(), IN_PROGRESS)) {
-      return;
-    }
-    if (refundRepository.existsByPaymentIdAndStatus(payment.getId(), RefundStatus.COMPLETED)) {
-      return;
-    }
+    // if (refundRepository.existsByPaymentIdAndStatus(payment.getId(), IN_PROGRESS)) {
+    // return;
+    // }
+    // if (refundRepository.existsByPaymentIdAndStatus(payment.getId(), RefundStatus.COMPLETED)) {
+    // return;
+    // }
 
     RefundEntity refund = new RefundEntity();
     refund.setPayment(payment);
     refund.setStatus(IN_PROGRESS);
     refund.setTotalPrice(payment.getTotalPrice());
-    refund.setCurrency(event.getCurrency()
+    refund.setCurrency(event.getCurrency());
+    refund.setStripeRefundId(UUID.randomUUID()
         .toString());
     refundRepository.save(refund);
 
@@ -61,10 +64,14 @@ public class RefundStartedEventConsumer {
 
   private void persistCompletedEvent(RefundEntity refund) {
     try {
-      RefundCompletedEvent payload = new RefundCompletedEvent(refund.getId()
-          .toString(), refund.getTotalPrice()
-              .toPlainString(), OffsetDateTime.now()
-                  .toString());
+      RefundCompletedEventPayload payload = RefundCompletedEventPayload.builder()
+          .bookingId(refund.getPayment()
+              .getBookingId())
+          .totalPrice(refund.getTotalPrice()
+              .toPlainString())
+          .createdAt(OffsetDateTime.now()
+              .toString())
+          .build();
       OutboxEventEntity event = new OutboxEventEntity();
       event.setAggregateType("refund");
       event.setAggregateId(refund.getId());
