@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "RefundCompletedEvent",
+  "namespace": "com.cinema.kafka.event",
+  "fields": [
+    { "name": "bookingId", "type": "string" },
+    { "name": "totalPrice", "type": "string" },
+    { "name": "createdAt", "type": "string" }
+  ]
+}

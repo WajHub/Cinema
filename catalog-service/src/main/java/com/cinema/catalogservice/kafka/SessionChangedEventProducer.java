@@ -1,11 +1,11 @@
 package com.cinema.catalogservice.kafka;
 
 import com.cinema.catalogservice.entity.OutboxEventEntity;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.cinema.kafka.event.SessionChangedEvent;
 import com.cinema.kafka.event.SessionChangedEventSeat;
 import com.cinema.kafka.event.SessionChangedEventType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,14 +18,6 @@ public class SessionChangedEventProducer implements OutboxEventProducer {
   private final KafkaTemplate<String, Object> kafkaTemplate;
   private final ObjectMapper objectMapper;
   private final String topic;
-
-  public SessionChangedEventProducer(KafkaTemplate<String, Object> kafkaTemplate,
-      ObjectMapper objectMapper,
-      @Value("${app.kafka.topics.catalog-events}") String topic) {
-    this.kafkaTemplate = kafkaTemplate;
-    this.objectMapper = objectMapper;
-    this.topic = topic;
-  }
 
   @Override
   public boolean supports(String eventType) {
@@ -65,5 +57,13 @@ public class SessionChangedEventProducer implements OutboxEventProducer {
     } catch (Exception exception) {
       throw new IllegalStateException("Failed to convert outbox payload to Kafka event", exception);
     }
+  }
+
+  public SessionChangedEventProducer(KafkaTemplate<String, Object> kafkaTemplate,
+      ObjectMapper objectMapper,
+      @Value("${app.kafka.topics.catalog-events}") String topic) {
+    this.kafkaTemplate = kafkaTemplate;
+    this.objectMapper = objectMapper;
+    this.topic = topic;
   }
 }

@@ -1,10 +1,10 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 ALTER TABLE payment_status_history
-    DROP CONSTRAINT IF EXISTS fk_payment_status_history_payment;
+DROP CONSTRAINT IF EXISTS fk_payment_status_history_payment;
 
 ALTER TABLE refund
-    DROP CONSTRAINT IF EXISTS fk_refund_payment;
+DROP CONSTRAINT IF EXISTS fk_refund_payment;
 
 ALTER TABLE payment
     ADD COLUMN id_uuid uuid DEFAULT gen_random_uuid() NOT NULL;
@@ -22,12 +22,12 @@ ALTER TABLE stripe_webhook_event
 
 UPDATE payment_status_history history
 SET payment_id_uuid = payment.id_uuid
-FROM payment
+    FROM payment
 WHERE history.payment_id = payment.id;
 
 UPDATE refund
 SET payment_id_uuid = payment.id_uuid
-FROM payment
+    FROM payment
 WHERE refund.payment_id = payment.id;
 
 ALTER TABLE payment_status_history
@@ -37,26 +37,26 @@ ALTER TABLE refund
     ALTER COLUMN payment_id_uuid SET NOT NULL;
 
 ALTER TABLE payment_status_history
-    DROP COLUMN id,
-    DROP COLUMN payment_id,
-    RENAME COLUMN id_uuid TO id,
-    RENAME COLUMN payment_id_uuid TO payment_id;
+DROP COLUMN id,
+    DROP COLUMN payment_id;
+ALTER TABLE payment_status_history RENAME COLUMN id_uuid TO id;
+ALTER TABLE payment_status_history RENAME COLUMN payment_id_uuid TO payment_id;
 
 ALTER TABLE refund
-    DROP COLUMN id,
-    DROP COLUMN payment_id,
-    RENAME COLUMN id_uuid TO id,
-    RENAME COLUMN payment_id_uuid TO payment_id;
+DROP COLUMN id,
+    DROP COLUMN payment_id;
+ALTER TABLE refund RENAME COLUMN id_uuid TO id;
+ALTER TABLE refund RENAME COLUMN payment_id_uuid TO payment_id;
 
 ALTER TABLE stripe_webhook_event
-    DROP COLUMN id,
-    RENAME COLUMN id_uuid TO id;
+DROP COLUMN id;
+ALTER TABLE stripe_webhook_event RENAME COLUMN id_uuid TO id;
 
 ALTER TABLE payment
-    DROP CONSTRAINT payment_pkey,
-    DROP COLUMN id,
-    RENAME COLUMN id_uuid TO id,
-    ADD CONSTRAINT payment_pkey PRIMARY KEY (id);
+DROP CONSTRAINT payment_pkey,
+    DROP COLUMN id;
+ALTER TABLE payment RENAME COLUMN id_uuid TO id;
+ALTER TABLE payment ADD CONSTRAINT payment_pkey PRIMARY KEY (id);
 
 ALTER TABLE payment_status_history
     ADD CONSTRAINT payment_status_history_pkey PRIMARY KEY (id),
