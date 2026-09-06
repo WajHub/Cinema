@@ -2,6 +2,7 @@ package com.cinema.bookingservice.integration;
 
 import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.MovieSessionRepository;
+import com.cinema.bookingservice.repository.OutboxEventRepository;
 import com.cinema.bookingservice.repository.SessionSeatRepository;
 import com.cinema.bookingservice.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,10 +48,14 @@ class IntegrationTestConfiguration {
   protected BookingRepository bookingRepository;
 
   @Autowired
+  protected OutboxEventRepository outboxEventRepository;
+
+  @Autowired
   protected UserRepository userRepository;
 
   @BeforeEach
   void cleanDatabase() {
+    outboxEventRepository.deleteAllInBatch();
     sessionSeatRepository.deleteAllInBatch();
     bookingRepository.deleteAllInBatch();
     movieSessionRepository.deleteAllInBatch();
