@@ -6,5 +6,4 @@ public record SessionChangedEventSeatPayload(
     UUID seatId,
     String rowLabel,
     Integer seatNumber,
-    String price) {
-}
+    String price) {}

@@ -3,6 +3,7 @@ package com.cinema.bookingservice.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.cinema.bookingservice.entity.BookingEntity;
+import com.cinema.bookingservice.entity.BookingStatus;
 import com.cinema.bookingservice.entity.MovieSessionEntity;
 import com.cinema.bookingservice.entity.SessionSeatEntity;
 import com.cinema.bookingservice.entity.UserEntity;
@@ -32,7 +33,7 @@ class BookingSessionReplicationTest extends IntegrationTestConfiguration {
         .orElseThrow();
     assertThat(session.getMovieTitle()).isEqualTo("Inception");
 
-    SessionSeatEntity seat = sessionSeatRepository.findBySession_IdAndSeatId(session.getId(), seatId)
+    SessionSeatEntity seat = sessionSeatRepository.findByMovieSession_IdAndCatalogSeatId(session.getId(), seatId)
         .orElseThrow();
     assertThat(seat.getRowLabel()).isEqualTo("A");
     assertThat(seat.getSeatNumber()).isEqualTo(1);
@@ -52,7 +53,7 @@ class BookingSessionReplicationTest extends IntegrationTestConfiguration {
 
     MovieSessionEntity session = movieSessionRepository.findByCatalogSessionId(sessionId)
         .orElseThrow();
-    SessionSeatEntity seat = sessionSeatRepository.findBySession_IdAndSeatId(session.getId(), seatId)
+    SessionSeatEntity seat = sessionSeatRepository.findByMovieSession_IdAndCatalogSeatId(session.getId(), seatId)
         .orElseThrow();
 
     UserEntity user = new UserEntity();
@@ -62,9 +63,8 @@ class BookingSessionReplicationTest extends IntegrationTestConfiguration {
 
     BookingEntity booking = new BookingEntity();
     booking.setUser(user);
-    booking.setSession(session);
     booking.setTotalPrice(BigDecimal.valueOf(12.50));
-    booking.setStatus("CONFIRMED");
+    booking.setStatus(BookingStatus.CONFIRMED);
     booking = bookingRepository.save(booking);
 
     seat.setBooking(booking);
@@ -79,7 +79,7 @@ class BookingSessionReplicationTest extends IntegrationTestConfiguration {
 
     MovieSessionEntity updatedSession = movieSessionRepository.findByCatalogSessionId(sessionId)
         .orElseThrow();
-    SessionSeatEntity updatedSeat = sessionSeatRepository.findBySession_IdAndSeatId(updatedSession.getId(), seatId)
+    SessionSeatEntity updatedSeat = sessionSeatRepository.findByMovieSession_IdAndCatalogSeatId(updatedSession.getId(), seatId)
         .orElseThrow();
 
     assertThat(updatedSession.getMovieTitle()).isEqualTo("Inception 2");

@@ -6,10 +6,10 @@ COPY mvnw .
 COPY .mvn .mvn
 
 RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline
+RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline
 
 COPY src src
-RUN chmod +x mvnw && ./mvnw -DskipTests clean package
+RUN --mount=type=cache,target=/root/.m2 ./mvnw -DskipTests clean package
 
 FROM eclipse-temurin:25-jre
 WORKDIR /app

@@ -14,5 +14,4 @@ public record SessionChangedEventPayload(
     String endsAt,
     String status,
     String basePrice,
-    List<SessionChangedEventSeatPayload> seats) {
-}
+    List<SessionChangedEventSeatPayload> seats) {}

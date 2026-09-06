@@ -111,22 +111,30 @@ public class SessionService {
 
   private String toOutboxPayload(SessionEntity session, String eventType) {
     try {
-      SessionChangedEventPayload payload = new SessionChangedEventPayload(eventType, session.getId(), session.getAuditory()
-          .getId(), session.getAuditory()
-              .getName(), session.getMovie()
-                  .getId(), session.getMovie()
-                      .getTitle(), session.getStartsAt()
-                          .toString(), session.getEndsAt()
-                              .toString(), session.getStatus(), session.getBasePrice()
-                                  .toPlainString(), seatRepository.findAllByAuditory_Id(session.getAuditory()
-                                      .getId())
-                                      .stream()
-                                      .sorted(java.util.Comparator.comparing(SeatEntity::getRowLabel)
-                                          .thenComparing(SeatEntity::getSeatNumber))
-                                      .map(seat -> new SessionChangedEventSeatPayload(seat.getId(), seat.getRowLabel(), seat.getSeatNumber(), seat
-                                          .getSeatPrice()
-                                          .toPlainString()))
-                                      .toList());
+      List<SessionChangedEventSeatPayload> seats = seatRepository.findAllByAuditory_Id(session.getAuditory().getId())
+          .stream()
+          .sorted(java.util.Comparator.comparing(SeatEntity::getRowLabel)
+              .thenComparing(SeatEntity::getSeatNumber))
+          .map(seat -> new SessionChangedEventSeatPayload(seat.getId(), seat.getRowLabel(), seat.getSeatNumber(), seat
+              .getSeatPrice()
+              .toPlainString()))
+            .toList();
+      SessionChangedEventPayload payload = new SessionChangedEventPayload(eventType, session.getId(),
+          session.getAuditory()
+              .getId(),
+          session.getAuditory()
+              .getName(),
+          session.getMovie()
+              .getId(),
+          session.getMovie()
+              .getTitle(),
+          session.getStartsAt()
+              .toString(),
+          session.getEndsAt()
+              .toString(),
+          session.getStatus(), session.getBasePrice()
+              .toPlainString(),
+          seats);
       return objectMapper.writeValueAsString(payload);
     } catch (Exception exception) {
       throw new IllegalStateException("Failed to serialize session outbox event", exception);

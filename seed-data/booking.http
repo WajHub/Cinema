@@ -1,0 +1,22 @@
+--------------  GET  ------------------
+###
+# @name getSessions
+GET http://{{booking-service}}/api/v1/movie-sessions
+Content-Type: application/json
+
+###
+GET http://{{booking-service}}/api/v1/users
+Content-Type: application/json
+
+
+--------------  POST  ------------------
+###
+POST http://localhost:8082/api/v1/session-seats/e516aed9-b67d-4427-9478-fd53acc3b2af/reserve
+Content-Type: application/json
+
+{
+  "userId": "ca11ace7-0343-4774-b459-8a1a8a7c576d",
+  "catalogSeatIds": [
+    "57dd8987-2be1-438a-a58f-5c11c814c8d2"
+  ]
+}

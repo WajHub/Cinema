@@ -39,7 +39,7 @@ services:
         # Controller Quorum Configuration (Raft)
       ############################################
       # List of controller nodes that form the Raft quorum
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@cinema-kafka-1:9093'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@localhost:9093'
       # Listener name used by controllers for internal Raft communication
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       ############################################
