@@ -184,6 +184,8 @@ services:
       PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/payment_service
       PAYMENT_DB_USERNAME: postgres
       PAYMENT_DB_PASSWORD: postgres
+      KAFKA_BOOTSTRAP_SERVER: cinema-kafka-1:9092
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
     ports:
       - "8084:8084"
     develop:

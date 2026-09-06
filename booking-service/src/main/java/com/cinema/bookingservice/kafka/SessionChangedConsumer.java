@@ -25,21 +25,22 @@ public class SessionChangedConsumer {
   @KafkaListener(topics = "${app.kafka.topics.catalog-events}", groupId = "${spring.kafka.consumer.group-id}")
   @Transactional
   public void listen(SessionChangedEvent message) {
+    var payload = message.getPayload();
     movieSessionRepository.upsertSession( //
         UUID.randomUUID(), //
-        UUID.fromString(message.getSessionId()), //
-        message.getMovieTitle(), //
-        OffsetDateTime.parse(message.getStartsAt()), //
-        OffsetDateTime.parse(message.getEndsAt()));//
+        UUID.fromString(payload.getSessionId()), //
+        payload.getMovieTitle(), //
+        OffsetDateTime.parse(payload.getStartsAt()), //
+        OffsetDateTime.parse(payload.getEndsAt()));//
 
-    if (message.getEventType()
+    if (payload.getEventType()
         .name()
         .equals("CREATE")) {
-      UUID catalogSessionId = UUID.fromString(message.getSessionId());
+      UUID catalogSessionId = UUID.fromString(payload.getSessionId());
       UUID sessionId = movieSessionRepository.findByCatalogSessionId(catalogSessionId)
           .orElseThrow()
           .getId();
-      message.getSeats()
+      payload.getSeats()
           .forEach(seat -> sessionSeatRepository.upsertSeat //
           (UUID.randomUUID(), //
               sessionId, //
@@ -48,6 +49,6 @@ public class SessionChangedConsumer {
               seat.getSeatNumber(), //
               new BigDecimal(seat.getPrice())));//
     }
-    log.info("Replicated session {} with event {}", message.getSessionId(), message.getEventType());
+    log.info("Replicated session {} with event {}", payload.getSessionId(), payload.getEventType());
   }
 }

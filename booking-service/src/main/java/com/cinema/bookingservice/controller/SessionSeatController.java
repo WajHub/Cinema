@@ -26,7 +26,7 @@ public class SessionSeatController {
   public ResponseEntity<BookingReservationResponse> reserveSeats(@PathVariable UUID movieSessionId,
       @Valid @RequestBody SeatReservationRequest request) {
     try {
-      BookingReservationResponse response = sessionSeatService.reserveSeats(movieSessionId, request.catalogSeatIds(), request.userId());
+      BookingReservationResponse response = sessionSeatService.reserveSeats(movieSessionId, request.seatIds(), request.userId());
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(response);
     } catch (DoubleBokingException e) {

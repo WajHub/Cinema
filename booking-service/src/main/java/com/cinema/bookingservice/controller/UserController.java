@@ -41,6 +41,7 @@ public class UserController {
     return userService.findById(id);
   }
 
+
   @PutMapping("/{id}")
   public UserResponse update(@PathVariable UUID id, @Valid @RequestBody UserRequest request) {
     return userService.update(id, request);

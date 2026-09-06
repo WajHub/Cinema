@@ -109,7 +109,7 @@ docker/postgres/init/
 
 4. **Outbox Pattern for Reliable Event Publishing:** All domain changes that require cross-service notification are persisted to an `outbox_event` table within the same transaction as the domain model change. 
 
-5. **Scheduler-Driven Event Publishing**: A `@Scheduled` component (`SessionOutboxPublisher.publishPendingEvents()`) polls the outbox table periodically (default 2000ms, configurable via app.outbox.poll-delay-ms), converts events to Kafka Avro messages, publishes them, and deletes processed events atomically—decoupling publication timing from request processing for resilient async communication.
+5. **Scheduler-Driven Event Publishing**: Each service has exactly one `@Scheduled` outbox component (`OutboxEventScheduler.publishPendingEvents()`). It polls the outbox table periodically (default 2000ms, configurable via `app.outbox.poll-delay-ms`), selects a matching event producer by event type, and deletes successfully delegated events atomically. Event producers only convert payloads and publish Kafka Avro messages; they do not poll the outbox.
 
 6. **Infrastructure as Code:** Azure deployment via Terraform; secrets managed separately (db_password, ACR credentials) to support multi-environment deployments.
 
@@ -135,9 +135,13 @@ docker/postgres/init/
 - **Publishing Scheduler:** Each service has a scheduled publisher component that:
   - Uses `@Scheduled` with configurable polling interval (`app.outbox.poll-delay-ms`, default 2000ms)
   - Calls `outboxEventRepository.lockNextBatch(batchSize)` for pessimistic locking to prevent duplicate publishing
-  - Publishes to Kafka topics using `KafkaTemplate`
-  - Deletes successfully published events atomically
+  - Delegates each event to the producer matching its event type
+  - Deletes successfully delegated events atomically
+- **Event Producers:** Each producer handles one or more explicitly supported event types, converts the plain outbox JSON payload to a generated Avro event, and publishes it with `KafkaTemplate`. Producers must not contain `@Scheduled` or call `lockNextBatch()`.
 - **Configuration:** Outbox polling delay is configurable per environment via `app.outbox.poll-delay-ms` property (tests use higher delays like 600000ms to disable auto-polling)
+
+### Coding Standards
+- **Lombok:** Use Project Lombok annotations (e.g., `@Data`, `@Builder`, `@RequiredArgsConstructor`, `@Slf4j`) wherever possible to eliminate boilerplate code across entities, DTOs, services, and configuration classes.
 
 ---
 

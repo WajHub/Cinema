@@ -12,7 +12,9 @@ import com.cinema.bookingservice.entity.SessionSeatEntity;
 import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.SessionSeatRepository;
 import com.cinema.kafka.event.PaymentCancelledEvent;
+import com.cinema.kafka.event.PaymentCancelledEventPayload;
 import com.cinema.kafka.event.PaymentCompletedEvent;
+import com.cinema.kafka.event.PaymentCompletedEventPayload;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -44,13 +46,15 @@ class PaymentResultConsumerTest {
     when(sessionSeatRepository.findByBooking_Id(bookingId)).thenReturn(List.of(seat));
 
     consumer.onPaymentCompleted(PaymentCompletedEvent.newBuilder()
-        .setPaymentId("payment-1")
-        .setBookingId(bookingId.toString())
-        .setTotalPrice("20.00")
-        .setCurrency("PLN")
-        .setStripeCheckoutSessionId("checkout-1")
-        .setCompletedAt("2026-09-03T10:00:00Z")
-        .setStatus("completed")
+        .setPayload(PaymentCompletedEventPayload.newBuilder()
+            .setPaymentId("payment-1")
+            .setBookingId(bookingId.toString())
+            .setTotalPrice("20.00")
+            .setCurrency("PLN")
+            .setStripeCheckoutSessionId("checkout-1")
+            .setCompletedAt("2026-09-03T10:00:00Z")
+            .setStatus("completed")
+            .build())
         .build());
 
     assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
@@ -68,16 +72,18 @@ class PaymentResultConsumerTest {
     when(sessionSeatRepository.findByBooking_Id(bookingId)).thenReturn(List.of(seat));
 
     consumer.onPaymentCancelled(PaymentCancelledEvent.newBuilder()
-        .setPaymentId("payment-1")
-        .setBookingId(bookingId.toString())
-        .setCatalogSessionId(UUID.randomUUID().toString())
-        .setCatalogSeatIds(List.of(UUID.randomUUID().toString()))
-        .setTotalPrice("20.00")
-        .setCurrency("PLN")
-        .setStripeCheckoutSessionId("checkout-1")
-        .setCancelledAt("2026-09-03T10:00:00Z")
-        .setReason("expired")
-        .setStatus("cancelled")
+        .setPayload(PaymentCancelledEventPayload.newBuilder()
+            .setPaymentId("payment-1")
+            .setBookingId(bookingId.toString())
+            .setCatalogSessionId(UUID.randomUUID().toString())
+            .setCatalogSeatIds(List.of(UUID.randomUUID().toString()))
+            .setTotalPrice("20.00")
+            .setCurrency("PLN")
+            .setStripeCheckoutSessionId("checkout-1")
+            .setCancelledAt("2026-09-03T10:00:00Z")
+            .setReason("expired")
+            .setStatus("cancelled")
+            .build())
         .build());
 
     assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
@@ -94,13 +100,15 @@ class PaymentResultConsumerTest {
     when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
 
     consumer.onPaymentCompleted(PaymentCompletedEvent.newBuilder()
-        .setPaymentId("payment-1")
-        .setBookingId(bookingId.toString())
-        .setTotalPrice("20.00")
-        .setCurrency("PLN")
-        .setStripeCheckoutSessionId("checkout-1")
-        .setCompletedAt("2026-09-03T10:00:00Z")
-        .setStatus("completed")
+        .setPayload(PaymentCompletedEventPayload.newBuilder()
+            .setPaymentId("payment-1")
+            .setBookingId(bookingId.toString())
+            .setTotalPrice("20.00")
+            .setCurrency("PLN")
+            .setStripeCheckoutSessionId("checkout-1")
+            .setCompletedAt("2026-09-03T10:00:00Z")
+            .setStatus("completed")
+            .build())
         .build());
 
     verifyNoInteractions(sessionSeatRepository);

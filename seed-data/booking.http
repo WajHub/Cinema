@@ -5,9 +5,14 @@ GET http://{{booking-service}}/api/v1/movie-sessions
 Content-Type: application/json
 
 ###
+# @name getUsers
 GET http://{{booking-service}}/api/v1/users
 Content-Type: application/json
 
+###
+# @name getBookings
+GET http://{{booking-service}}/api/v1/bookings?userId=ca11ace7-0343-4774-b459-8a1a8a7c576d
+Content-Type: application/json
 
 --------------  POST  ------------------
 ###
@@ -16,7 +21,13 @@ Content-Type: application/json
 
 {
   "userId": "ca11ace7-0343-4774-b459-8a1a8a7c576d",
-  "catalogSeatIds": [
-    "57dd8987-2be1-438a-a58f-5c11c814c8d2"
+  "seatIds": [
+    "a8e3cca2-ae6d-4ac7-9378-57b97d8bc4bc"
   ]
 }
+
+###
+POST http://localhost:8082/api/v1/bookings/adc68e1a-8b01-43bf-b958-1b4fe2ef09cb/cancel
+Content-Type: application/json
+
+

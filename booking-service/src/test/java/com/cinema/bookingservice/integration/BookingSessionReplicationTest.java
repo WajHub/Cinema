@@ -8,6 +8,7 @@ import com.cinema.bookingservice.entity.MovieSessionEntity;
 import com.cinema.bookingservice.entity.SessionSeatEntity;
 import com.cinema.bookingservice.entity.UserEntity;
 import com.cinema.kafka.event.SessionChangedEvent;
+import com.cinema.kafka.event.SessionChangedEventPayload;
 import com.cinema.kafka.event.SessionChangedEventSeat;
 import com.cinema.kafka.event.SessionChangedEventType;
 import java.math.BigDecimal;
@@ -92,19 +93,21 @@ class BookingSessionReplicationTest extends IntegrationTestConfiguration {
 
   private SessionChangedEvent sessionEvent(SessionChangedEventType type, UUID sessionId, String movieTitle, List<SessionChangedEventSeat> seats) {
     return SessionChangedEvent.newBuilder()
-        .setEventType(type)
-        .setSessionId(sessionId.toString())
-        .setAuditoryId(UUID.randomUUID()
-            .toString())
-        .setAuditoryName("Hall 1")
-        .setMovieId(UUID.randomUUID()
-            .toString())
-        .setMovieTitle(movieTitle)
-        .setStartsAt("2026-08-12T10:00:00Z")
-        .setEndsAt("2026-08-12T12:00:00Z")
-        .setStatus("SCHEDULED")
-        .setBasePrice("15.00")
-        .setSeats(seats)
+        .setPayload(SessionChangedEventPayload.newBuilder()
+            .setEventType(type)
+            .setSessionId(sessionId.toString())
+            .setAuditoryId(UUID.randomUUID()
+                .toString())
+            .setAuditoryName("Hall 1")
+            .setMovieId(UUID.randomUUID()
+                .toString())
+            .setMovieTitle(movieTitle)
+            .setStartsAt("2026-08-12T10:00:00Z")
+            .setEndsAt("2026-08-12T12:00:00Z")
+            .setStatus("SCHEDULED")
+            .setBasePrice("15.00")
+            .setSeats(seats)
+            .build())
         .build();
   }
 

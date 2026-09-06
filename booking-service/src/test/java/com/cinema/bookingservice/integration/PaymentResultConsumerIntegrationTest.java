@@ -10,7 +10,9 @@ import com.cinema.bookingservice.entity.SessionSeatEntity;
 import com.cinema.bookingservice.entity.UserEntity;
 import com.cinema.bookingservice.kafka.PaymentResultConsumer;
 import com.cinema.kafka.event.PaymentCancelledEvent;
+import com.cinema.kafka.event.PaymentCancelledEventPayload;
 import com.cinema.kafka.event.PaymentCompletedEvent;
+import com.cinema.kafka.event.PaymentCompletedEventPayload;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -29,13 +31,15 @@ class PaymentResultConsumerIntegrationTest extends IntegrationTestConfiguration 
     SessionSeatEntity seat = createSeat(booking, SeatReservationStatus.TEMPORARY);
 
     paymentResultConsumer.onPaymentCompleted(PaymentCompletedEvent.newBuilder()
-        .setPaymentId("payment-1")
-        .setBookingId(booking.getId().toString())
-        .setTotalPrice("20.00")
-        .setCurrency("PLN")
-        .setStripeCheckoutSessionId("checkout-1")
-        .setCompletedAt(OffsetDateTime.now().toString())
-        .setStatus("completed")
+        .setPayload(PaymentCompletedEventPayload.newBuilder()
+            .setPaymentId("payment-1")
+            .setBookingId(booking.getId().toString())
+            .setTotalPrice("20.00")
+            .setCurrency("PLN")
+            .setStripeCheckoutSessionId("checkout-1")
+            .setCompletedAt(OffsetDateTime.now().toString())
+            .setStatus("completed")
+            .build())
         .build());
 
     BookingEntity savedBooking = bookingRepository.findById(booking.getId()).orElseThrow();
@@ -50,16 +54,18 @@ class PaymentResultConsumerIntegrationTest extends IntegrationTestConfiguration 
     SessionSeatEntity seat = createSeat(booking, SeatReservationStatus.TEMPORARY);
 
     paymentResultConsumer.onPaymentCancelled(PaymentCancelledEvent.newBuilder()
-        .setPaymentId("payment-1")
-        .setBookingId(booking.getId().toString())
-        .setCatalogSessionId(UUID.randomUUID().toString())
-        .setCatalogSeatIds(List.of(UUID.randomUUID().toString()))
-        .setTotalPrice("20.00")
-        .setCurrency("PLN")
-        .setStripeCheckoutSessionId("checkout-1")
-        .setCancelledAt(OffsetDateTime.now().toString())
-        .setReason("expired")
-        .setStatus("cancelled")
+        .setPayload(PaymentCancelledEventPayload.newBuilder()
+            .setPaymentId("payment-1")
+            .setBookingId(booking.getId().toString())
+            .setCatalogSessionId(UUID.randomUUID().toString())
+            .setCatalogSeatIds(List.of(UUID.randomUUID().toString()))
+            .setTotalPrice("20.00")
+            .setCurrency("PLN")
+            .setStripeCheckoutSessionId("checkout-1")
+            .setCancelledAt(OffsetDateTime.now().toString())
+            .setReason("expired")
+            .setStatus("cancelled")
+            .build())
         .build());
 
     BookingEntity savedBooking = bookingRepository.findById(booking.getId()).orElseThrow();
