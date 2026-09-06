@@ -2,7 +2,7 @@ package com.cinema.bookingservice.kafka;
 
 import com.cinema.bookingservice.entity.OutboxEventEntity;
 import com.cinema.kafka.event.RefundStartedEvent;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.cinema.kafka.event.RefundStartedEventPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,21 +34,15 @@ public class RefundStartedProducer implements OutboxEventProducer {
 
   private RefundStartedEvent toKafkaEvent(OutboxEventEntity event) {
     try {
-      JsonNode root = objectMapper.readTree(event.getPayload());
+      RefundStartedEventPayload payload = objectMapper.readValue(
+          event.getPayload(), RefundStartedEventPayload.class);
+
       return RefundStartedEvent.newBuilder()
-          .setBookingId(root.path("bookingId")
-              .asText())
-          .setUserId(root.path("userId")
-              .asText())
-          .setTotalPrice(root.path("totalPrice")
-              .asText())
-          .setCurrency(root.path("currency")
-              .asText())
-          .setCreatedAt(root.path("createdAt")
-              .asText())
+          .setPayload(payload)
           .build();
     } catch (Exception exception) {
       throw new IllegalStateException("Failed to convert RefundStartedEvent outbox payload", exception);
     }
   }
 }
+

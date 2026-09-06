@@ -2,12 +2,8 @@ package com.cinema.catalogservice.kafka;
 
 import com.cinema.catalogservice.entity.OutboxEventEntity;
 import com.cinema.kafka.event.SessionChangedEvent;
-import com.cinema.kafka.event.SessionChangedEventSeat;
-import com.cinema.kafka.event.SessionChangedEventType;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.cinema.kafka.event.SessionChangedEventPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -31,28 +27,10 @@ public class SessionChangedEventProducer implements OutboxEventProducer {
 
   private SessionChangedEvent toKafkaEvent(OutboxEventEntity event) {
     try {
-      JsonNode root = objectMapper.readTree(event.getPayload());
-      List<SessionChangedEventSeat> seats = new ArrayList<>();
-      for (JsonNode seatNode : root.path("seats")) {
-        seats.add(SessionChangedEventSeat.newBuilder()
-            .setSeatId(seatNode.path("seatId").asText())
-            .setRowLabel(seatNode.path("rowLabel").asText())
-            .setSeatNumber(seatNode.path("seatNumber").asInt())
-            .setPrice(seatNode.path("price").asText())
-            .build());
-      }
+      SessionChangedEventPayload payload = objectMapper.readValue(
+          event.getPayload(), SessionChangedEventPayload.class);
       return SessionChangedEvent.newBuilder()
-          .setEventType(SessionChangedEventType.valueOf(root.path("eventType").asText()))
-          .setSessionId(root.path("sessionId").asText())
-          .setAuditoryId(root.path("auditoryId").asText())
-          .setAuditoryName(root.path("auditoryName").asText())
-          .setMovieId(root.path("movieId").asText())
-          .setMovieTitle(root.path("movieTitle").asText())
-          .setStartsAt(root.path("startsAt").asText())
-          .setEndsAt(root.path("endsAt").asText())
-          .setStatus(root.path("status").asText())
-          .setBasePrice(root.path("basePrice").asText())
-          .setSeats(seats)
+          .setPayload(payload)
           .build();
     } catch (Exception exception) {
       throw new IllegalStateException("Failed to convert outbox payload to Kafka event", exception);

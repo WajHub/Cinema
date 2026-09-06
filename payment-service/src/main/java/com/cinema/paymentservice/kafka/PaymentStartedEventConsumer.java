@@ -1,11 +1,11 @@
 package com.cinema.paymentservice.kafka;
 
+import com.cinema.kafka.event.PaymentCompletedEventPayload;
 import com.cinema.kafka.event.PaymentStartedEvent;
 import com.cinema.paymentservice.entity.OutboxEventEntity;
 import com.cinema.paymentservice.entity.PaymentEntity;
 import com.cinema.paymentservice.entity.PaymentStatus;
 import com.cinema.paymentservice.entity.PaymentStatusHistoryEntity;
-import com.cinema.paymentservice.kafka.event.PaymentCompletedEventPayload;
 import com.cinema.paymentservice.repository.OutboxEventRepository;
 import com.cinema.paymentservice.repository.PaymentRepository;
 import com.cinema.paymentservice.repository.PaymentStatusHistoryRepository;
@@ -34,7 +34,8 @@ public class PaymentStartedEventConsumer {
   @KafkaListener(topics = "${app.kafka.topics.payment-started}")
   @Transactional
   public void consume(PaymentStartedEvent event) {
-    UUID bookingId = UUID.fromString(event.getBookingId()
+    var eventPayload = event.getPayload();
+    UUID bookingId = UUID.fromString(eventPayload.getBookingId()
         .toString());
     if (paymentRepository.existsByBookingId(bookingId)) {
       return;
@@ -42,16 +43,16 @@ public class PaymentStartedEventConsumer {
 
     PaymentEntity payment = new PaymentEntity();
     payment.setBookingId(bookingId);
-    payment.setCatalogSessionId(UUID.fromString(event.getCatalogSessionId()
+    payment.setCatalogSessionId(UUID.fromString(eventPayload.getCatalogSessionId()
         .toString()));
-    payment.setCatalogSeatIds(writeSeatIds(event.getCatalogSeatIds()));
-    payment.setTotalPrice(new java.math.BigDecimal(event.getTotalPrice()
+    payment.setCatalogSeatIds(writeSeatIds(eventPayload.getCatalogSeatIds()));
+    payment.setTotalPrice(new java.math.BigDecimal(eventPayload.getTotalPrice()
         .toString()));
     payment.setCurrency(CURRENCY);
     payment.setCurrentStatus(IN_PROGRESS);
     payment.setStripeCheckoutSessionId(UUID.randomUUID()
         .toString());
-    payment.setStartedAt(OffsetDateTime.parse(event.getCreatedAt()
+    payment.setStartedAt(OffsetDateTime.parse(eventPayload.getCreatedAt()
         .toString()));
 
     PaymentEntity savedPayment = paymentRepository.save(payment);
@@ -65,10 +66,20 @@ public class PaymentStartedEventConsumer {
 
   private void persistCompletedEvent(PaymentEntity payment) {
     try {
-      PaymentCompletedEventPayload payload = new PaymentCompletedEventPayload(payment.getId(), payment.getBookingId(), payment.getTotalPrice()
-          .toPlainString(), payment.getCurrency(), payment.getStripeCheckoutSessionId(), OffsetDateTime.now()
-              .toString(), COMPLETED.name()
-                  .toLowerCase());
+      PaymentCompletedEventPayload payload = PaymentCompletedEventPayload.newBuilder()
+          .setPaymentId(payment.getId()
+              .toString())
+          .setBookingId(payment.getBookingId()
+              .toString())
+          .setTotalPrice(payment.getTotalPrice()
+              .toPlainString())
+          .setCurrency(payment.getCurrency())
+          .setStripeCheckoutSessionId(payment.getStripeCheckoutSessionId())
+          .setCompletedAt(OffsetDateTime.now()
+              .toString())
+          .setStatus(COMPLETED.name()
+              .toLowerCase())
+          .build();
       OutboxEventEntity event = new OutboxEventEntity();
       event.setAggregateType("payment");
       event.setAggregateId(payment.getBookingId());

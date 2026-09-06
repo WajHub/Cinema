@@ -1,13 +1,13 @@
 package com.cinema.paymentservice.scheduler;
 
+import com.cinema.kafka.event.PaymentCancelledEventPayload;
+import com.cinema.paymentservice.entity.OutboxEventEntity;
 import com.cinema.paymentservice.entity.PaymentEntity;
 import com.cinema.paymentservice.entity.PaymentStatus;
 import com.cinema.paymentservice.entity.PaymentStatusHistoryEntity;
-import com.cinema.paymentservice.entity.OutboxEventEntity;
-import com.cinema.paymentservice.kafka.event.PaymentCancelledEventPayload;
+import com.cinema.paymentservice.repository.OutboxEventRepository;
 import com.cinema.paymentservice.repository.PaymentRepository;
 import com.cinema.paymentservice.repository.PaymentStatusHistoryRepository;
-import com.cinema.paymentservice.repository.OutboxEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -50,23 +50,30 @@ public class PaymentExpirationScheduler {
       statusHistoryRepository.save(history);
 
       persistCancelledEvent(payment);
+    }
   }
-}
 
-private void persistCancelledEvent(PaymentEntity payment) {
-  try {
-      PaymentCancelledEventPayload payload = new PaymentCancelledEventPayload(
-              payment.getId(), payment.getBookingId(), payment.getCatalogSessionId(),
-              readSeatIds(payment.getCatalogSeatIds()), payment.getTotalPrice().toPlainString(),
-              payment.getCurrency(), payment.getStripeCheckoutSessionId(), OffsetDateTime.now().toString(),
-          "Payment expired after " + expirationMinutes + " minutes", CANCELLED.name().toLowerCase());
+  private void persistCancelledEvent(PaymentEntity payment) {
+    try {
+      PaymentCancelledEventPayload payload = PaymentCancelledEventPayload.newBuilder()
+          .setPaymentId(payment.getId().toString())
+          .setBookingId(payment.getBookingId().toString())
+          .setCatalogSessionId(payment.getCatalogSessionId().toString())
+          .setCatalogSeatIds(readSeatIds(payment.getCatalogSeatIds()))
+          .setTotalPrice(payment.getTotalPrice().toPlainString())
+          .setCurrency(payment.getCurrency())
+          .setStripeCheckoutSessionId(payment.getStripeCheckoutSessionId())
+          .setCancelledAt(OffsetDateTime.now().toString())
+          .setReason("Payment expired after " + expirationMinutes + " minutes")
+          .setStatus(CANCELLED.name().toLowerCase())
+          .build();
       OutboxEventEntity event = new OutboxEventEntity();
       event.setAggregateType("payment");
       event.setAggregateId(payment.getBookingId());
       event.setType("PaymentCancelledEvent");
       event.setPayload(objectMapper.writeValueAsString(payload));
       outboxEventRepository.save(event);
-  } catch (Exception exception) {
+    } catch (Exception exception) {
       throw new IllegalStateException("Failed to persist PaymentCancelledEvent to outbox", exception);
     }
   }

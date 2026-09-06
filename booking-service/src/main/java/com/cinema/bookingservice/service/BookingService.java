@@ -6,7 +6,7 @@ import com.cinema.bookingservice.entity.BookingEntity;
 import com.cinema.bookingservice.entity.BookingStatus;
 import com.cinema.bookingservice.entity.OutboxEventEntity;
 import com.cinema.bookingservice.entity.SessionSeatEntity;
-import com.cinema.bookingservice.kafka.event.RefundStartedEventPayload;
+import com.cinema.kafka.event.RefundStartedEventPayload;
 import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.OutboxEventRepository;
 import com.cinema.bookingservice.repository.SessionSeatRepository;
@@ -90,14 +90,16 @@ public class BookingService {
 
   private void persistRefundStartedEvent(BookingEntity booking) {
     try {
-      RefundStartedEventPayload payload = RefundStartedEventPayload.builder()
-          .bookingId(booking.getId())
-          .userId(booking.getUser()
-              .getId())
-          .totalPrice(booking.getTotalPrice()
+      RefundStartedEventPayload payload = RefundStartedEventPayload.newBuilder()
+          .setBookingId(booking.getId()
+              .toString())
+          .setUserId(booking.getUser()
+              .getId()
+              .toString())
+          .setTotalPrice(booking.getTotalPrice()
               .toPlainString())
-          .currency("PLN")
-          .createdAt(OffsetDateTime.now()
+          .setCurrency("PLN")
+          .setCreatedAt(OffsetDateTime.now()
               .toString())
           .build();
 

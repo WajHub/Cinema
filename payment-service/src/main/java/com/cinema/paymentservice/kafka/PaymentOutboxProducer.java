@@ -1,14 +1,14 @@
 package com.cinema.paymentservice.kafka;
 
 import com.cinema.kafka.event.PaymentCancelledEvent;
+import com.cinema.kafka.event.PaymentCancelledEventPayload;
 import com.cinema.kafka.event.PaymentCompletedEvent;
+import com.cinema.kafka.event.PaymentCompletedEventPayload;
 import com.cinema.kafka.event.RefundCompletedEvent;
+import com.cinema.kafka.event.RefundCompletedEventPayload;
 import com.cinema.paymentservice.entity.OutboxEventEntity;
 import com.cinema.paymentservice.repository.OutboxEventRepository;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,75 +52,40 @@ public class PaymentOutboxProducer implements OutboxEventProducer {
           } else if (CANCELLED_EVENT.equals(event.getType())) {
               topic = paymentCancelledTopic;
               kafkaEvent = toCancelledEvent(event);
-    } else if (REFUND_COMPLETED_EVENT.equals(event.getType())) {
-        topic = refundCompletedTopic;
-        kafkaEvent = toRefundCompletedEvent(event);
-    } else {
-        throw new IllegalStateException("Unsupported payment outbox event type: " + event.getType());
-    }
-      kafkaTemplate.send(topic, event.getAggregateId().toString(), kafkaEvent);
-  } catch (Exception exception) {
-      log.error("Failed to publish payment outbox event {}", event.getId(), exception);
-      throw new IllegalStateException("Failed to publish payment outbox event", exception);
-    }
+          } else if (REFUND_COMPLETED_EVENT.equals(event.getType())) {
+              topic = refundCompletedTopic;
+              kafkaEvent = toRefundCompletedEvent(event);
+          } else {
+              throw new IllegalStateException("Unsupported payment outbox event type: " + event.getType());
+          }
+          kafkaTemplate.send(topic, event.getAggregateId().toString(), kafkaEvent);
+      } catch (Exception exception) {
+          log.error("Failed to publish payment outbox event {}", event.getId(), exception);
+          throw new IllegalStateException("Failed to publish payment outbox event", exception);
+      }
   }
 
   private PaymentCompletedEvent toCompletedEvent(OutboxEventEntity event) throws Exception {
-    JsonNode root = objectMapper.readTree(event.getPayload());
+    PaymentCompletedEventPayload payload = objectMapper.readValue(
+        event.getPayload(), PaymentCompletedEventPayload.class);
     return PaymentCompletedEvent.newBuilder()
-        .setPaymentId(root.path("paymentId")
-            .asText())
-        .setBookingId(root.path("bookingId")
-            .asText())
-        .setTotalPrice(root.path("totalPrice")
-            .asText())
-        .setCurrency(root.path("currency")
-            .asText())
-        .setStripeCheckoutSessionId(root.path("stripeCheckoutSessionId")
-            .asText())
-        .setCompletedAt(root.path("completedAt")
-            .asText())
-        .setStatus(root.path("status")
-            .asText())
+        .setPayload(payload)
         .build();
   }
 
   private PaymentCancelledEvent toCancelledEvent(OutboxEventEntity event) throws Exception {
-    JsonNode root = objectMapper.readTree(event.getPayload());
-    List<String> catalogSeatIds = new ArrayList<>();
-    for (JsonNode seatId : root.path("catalogSeatIds")) {
-      catalogSeatIds.add(seatId.asText());
-    }
-
+    PaymentCancelledEventPayload payload = objectMapper.readValue(
+        event.getPayload(), PaymentCancelledEventPayload.class);
     return PaymentCancelledEvent.newBuilder()
-        .setPaymentId(root.path("paymentId")
-            .asText())
-        .setBookingId(root.path("bookingId")
-            .asText())
-        .setCatalogSessionId(root.path("catalogSessionId")
-            .asText())
-        .setCatalogSeatIds(catalogSeatIds)
-        .setTotalPrice(root.path("totalPrice")
-            .asText())
-        .setCurrency(root.path("currency")
-            .asText())
-        .setStripeCheckoutSessionId(root.path("stripeCheckoutSessionId")
-            .asText())
-        .setCancelledAt(root.path("cancelledAt")
-            .asText())
-        .setReason(root.path("reason")
-            .asText())
-        .setStatus(root.path("status")
-            .asText())
+        .setPayload(payload)
         .build();
   }
 
   private RefundCompletedEvent toRefundCompletedEvent(OutboxEventEntity event) throws Exception {
-      JsonNode root = objectMapper.readTree(event.getPayload());
-      return RefundCompletedEvent.newBuilder()
-              .setBookingId(root.path("bookingId").asText())
-              .setTotalPrice(root.path("totalPrice").asText())
-              .setCreatedAt(root.path("createdAt").asText())
-              .build();
+    RefundCompletedEventPayload payload = objectMapper.readValue(
+        event.getPayload(), RefundCompletedEventPayload.class);
+    return RefundCompletedEvent.newBuilder()
+        .setPayload(payload)
+        .build();
   }
 }

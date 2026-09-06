@@ -2,10 +2,8 @@ package com.cinema.bookingservice.kafka;
 
 import com.cinema.bookingservice.entity.OutboxEventEntity;
 import com.cinema.kafka.event.PaymentStartedEvent;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.cinema.kafka.event.PaymentStartedEventPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,28 +34,15 @@ public class PaymentStartedProducer implements OutboxEventProducer {
 
   private PaymentStartedEvent toKafkaEvent(OutboxEventEntity event) {
     try {
-      JsonNode root = objectMapper.readTree(event.getPayload());
-
-      List<String> catalogSeatIds = new ArrayList<>();
-      for (JsonNode seatNode : root.path("catalogSeatIds")) {
-        catalogSeatIds.add(seatNode.asText());
-      }
+      PaymentStartedEventPayload payload = objectMapper.readValue(
+          event.getPayload(), PaymentStartedEventPayload.class);
 
       return PaymentStartedEvent.newBuilder()
-          .setBookingId(root.path("bookingId")
-              .asText())
-          .setUserId(root.path("userId")
-              .asText())
-          .setCatalogSessionId(root.path("catalogSessionId")
-              .asText())
-          .setCatalogSeatIds(catalogSeatIds)
-          .setTotalPrice(root.path("totalPrice")
-              .asText())
-          .setCreatedAt(root.path("createdAt")
-              .asText())
+          .setPayload(payload)
           .build();
     } catch (Exception exception) {
       throw new IllegalStateException("Failed to convert PaymentStartedEvent outbox payload", exception);
     }
   }
 }
+

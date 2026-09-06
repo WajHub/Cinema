@@ -5,36 +5,45 @@
   "doc": "Session replication event for catalog-to-booking synchronization",
   "fields": [
     {
-      "name": "eventType",
+      "name": "payload",
       "type": {
-        "type": "enum",
-        "name": "SessionChangedEventType",
-        "symbols": ["CREATE", "UPDATE"]
-      }
-    },
-    { "name": "sessionId", "type": "string" },
-    { "name": "auditoryId", "type": "string" },
-    { "name": "auditoryName", "type": "string" },
-    { "name": "movieId", "type": "string" },
-    { "name": "movieTitle", "type": "string" },
-    { "name": "startsAt", "type": "string" },
-    { "name": "endsAt", "type": "string" },
-    { "name": "status", "type": "string" },
-    { "name": "basePrice", "type": "string" },
-    {
-      "name": "seats",
-      "type": {
-        "type": "array",
-        "items": {
-          "type": "record",
-          "name": "SessionChangedEventSeat",
-          "fields": [
-            { "name": "seatId", "type": "string" },
-            { "name": "rowLabel", "type": "string" },
-            { "name": "seatNumber", "type": "int" },
-            { "name": "price", "type": "string" }
-          ]
-        }
+        "type": "record",
+        "name": "SessionChangedEventPayload",
+        "fields": [
+          {
+            "name": "eventType",
+            "type": {
+              "type": "enum",
+              "name": "SessionChangedEventType",
+              "symbols": ["CREATE", "UPDATE"]
+            }
+          },
+          { "name": "sessionId", "type": "string" },
+          { "name": "auditoryId", "type": "string" },
+          { "name": "auditoryName", "type": "string" },
+          { "name": "movieId", "type": "string" },
+          { "name": "movieTitle", "type": "string" },
+          { "name": "startsAt", "type": "string" },
+          { "name": "endsAt", "type": "string" },
+          { "name": "status", "type": "string" },
+          { "name": "basePrice", "type": "string" },
+          {
+            "name": "seats",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "SessionChangedEventSeat",
+                "fields": [
+                  { "name": "seatId", "type": "string" },
+                  { "name": "rowLabel", "type": "string" },
+                  { "name": "seatNumber", "type": "int" },
+                  { "name": "price", "type": "string" }
+                ]
+              }
+            }
+          }
+        ]
       }
     }
   ]

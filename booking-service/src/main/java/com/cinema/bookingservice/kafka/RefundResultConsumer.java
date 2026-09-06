@@ -24,7 +24,7 @@ public class RefundResultConsumer {
   @KafkaListener(topics = "${app.kafka.topics.refund-completed}", groupId = "${spring.kafka.consumer.group-id}")
   @Transactional
   public void onRefundCompleted(RefundCompletedEvent event) {
-    BookingEntity booking = findBooking(event.getBookingId()
+    BookingEntity booking = findBooking(event.getPayload().getBookingId()
         .toString());
 
     booking.setStatus(BookingStatus.CANCELLED);

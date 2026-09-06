@@ -56,7 +56,7 @@ class BookingServiceTest {
     seat.setStatus(com.cinema.bookingservice.entity.SeatReservationStatus.CONFIRMED);
 
     when(userRepository.existsById(userId)).thenReturn(true);
-    when(bookingRepository.findAllByUser_Id(userId)).thenReturn(List.of(booking));
+    when(bookingRepository.findAllByUser_IdAndStatus(userId, BookingStatus.CONFIRMED)).thenReturn(List.of(booking));
     when(sessionSeatRepository.findByBooking_Id(bookingId)).thenReturn(List.of(seat));
 
     var response = bookingService.findAllByUserId(userId);

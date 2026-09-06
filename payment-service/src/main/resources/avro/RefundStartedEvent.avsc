@@ -3,10 +3,19 @@
   "name": "RefundStartedEvent",
   "namespace": "com.cinema.kafka.event",
   "fields": [
-    { "name": "bookingId", "type": "string" },
-    { "name": "userId", "type": "string" },
-    { "name": "totalPrice", "type": "string" },
-    { "name": "currency", "type": "string" },
-    { "name": "createdAt", "type": "string" }
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "RefundStartedEventPayload",
+        "fields": [
+          { "name": "bookingId", "type": "string" },
+          { "name": "userId", "type": "string" },
+          { "name": "totalPrice", "type": "string" },
+          { "name": "currency", "type": "string" },
+          { "name": "createdAt", "type": "string" }
+        ]
+      }
+    }
   ]
 }

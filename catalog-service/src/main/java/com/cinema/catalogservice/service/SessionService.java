@@ -7,8 +7,9 @@ import com.cinema.catalogservice.entity.MovieEntity;
 import com.cinema.catalogservice.entity.OutboxEventEntity;
 import com.cinema.catalogservice.entity.SeatEntity;
 import com.cinema.catalogservice.entity.SessionEntity;
-import com.cinema.catalogservice.kafka.event.SessionChangedEventPayload;
-import com.cinema.catalogservice.kafka.event.SessionChangedEventSeatPayload;
+import com.cinema.kafka.event.SessionChangedEventPayload;
+import com.cinema.kafka.event.SessionChangedEventSeat;
+import com.cinema.kafka.event.SessionChangedEventType;
 import com.cinema.catalogservice.repository.AuditoryRepository;
 import com.cinema.catalogservice.repository.MovieRepository;
 import com.cinema.catalogservice.repository.OutboxEventRepository;
@@ -111,30 +112,30 @@ public class SessionService {
 
   private String toOutboxPayload(SessionEntity session, String eventType) {
     try {
-      List<SessionChangedEventSeatPayload> seats = seatRepository.findAllByAuditory_Id(session.getAuditory().getId())
+      List<SessionChangedEventSeat> seats = seatRepository.findAllByAuditory_Id(session.getAuditory().getId())
           .stream()
           .sorted(java.util.Comparator.comparing(SeatEntity::getRowLabel)
               .thenComparing(SeatEntity::getSeatNumber))
-          .map(seat -> new SessionChangedEventSeatPayload(seat.getId(), seat.getRowLabel(), seat.getSeatNumber(), seat
-              .getSeatPrice()
-              .toPlainString()))
-            .toList();
-      SessionChangedEventPayload payload = new SessionChangedEventPayload(eventType, session.getId(),
-          session.getAuditory()
-              .getId(),
-          session.getAuditory()
-              .getName(),
-          session.getMovie()
-              .getId(),
-          session.getMovie()
-              .getTitle(),
-          session.getStartsAt()
-              .toString(),
-          session.getEndsAt()
-              .toString(),
-          session.getStatus(), session.getBasePrice()
-              .toPlainString(),
-          seats);
+          .map(seat -> SessionChangedEventSeat.newBuilder()
+              .setSeatId(seat.getId().toString())
+              .setRowLabel(seat.getRowLabel())
+              .setSeatNumber(seat.getSeatNumber())
+              .setPrice(seat.getSeatPrice().toPlainString())
+              .build())
+          .toList();
+      SessionChangedEventPayload payload = SessionChangedEventPayload.newBuilder()
+          .setEventType(SessionChangedEventType.valueOf(eventType))
+          .setSessionId(session.getId().toString())
+          .setAuditoryId(session.getAuditory().getId().toString())
+          .setAuditoryName(session.getAuditory().getName())
+          .setMovieId(session.getMovie().getId().toString())
+          .setMovieTitle(session.getMovie().getTitle())
+          .setStartsAt(session.getStartsAt().toString())
+          .setEndsAt(session.getEndsAt().toString())
+          .setStatus(session.getStatus())
+          .setBasePrice(session.getBasePrice().toPlainString())
+          .setSeats(seats)
+          .build();
       return objectMapper.writeValueAsString(payload);
     } catch (Exception exception) {
       throw new IllegalStateException("Failed to serialize session outbox event", exception);

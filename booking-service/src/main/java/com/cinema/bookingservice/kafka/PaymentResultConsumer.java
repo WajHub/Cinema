@@ -25,7 +25,7 @@ public class PaymentResultConsumer {
   @KafkaListener(topics = "${app.kafka.topics.payment-completed}", groupId = "${spring.kafka.consumer.group-id}")
   @Transactional
   public void onPaymentCompleted(PaymentCompletedEvent event) {
-    BookingEntity booking = findBooking(event.getBookingId().toString());
+    BookingEntity booking = findBooking(event.getPayload().getBookingId().toString());
     if (booking == null || booking.getStatus() != BookingStatus.PENDING) {
       return;
     }
@@ -43,7 +43,7 @@ public class PaymentResultConsumer {
   @KafkaListener(topics = "${app.kafka.topics.payment-cancelled}", groupId = "${spring.kafka.consumer.group-id}")
   @Transactional
   public void onPaymentCancelled(PaymentCancelledEvent event) {
-    BookingEntity booking = findBooking(event.getBookingId().toString());
+    BookingEntity booking = findBooking(event.getPayload().getBookingId().toString());
     if (booking == null || booking.getStatus() != BookingStatus.PENDING) {
       return;
     }

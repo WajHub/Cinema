@@ -47,7 +47,7 @@ class SessionSeatServiceTest {
   private OutboxEventRepository outboxEventRepository;
 
   @Spy
-  private com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+  private com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.cinema.bookingservice.config.JacksonConfig().objectMapper();
 
   @InjectMocks
   private SessionSeatService service;

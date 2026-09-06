@@ -13,13 +13,10 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-@Testcontainers
 class IntegrationTestConfiguration {
 
   @Autowired
@@ -28,8 +25,12 @@ class IntegrationTestConfiguration {
   @Autowired
   protected KafkaTemplate<String, Object> kafkaTemplate;
 
-  @Container
-  static final KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
+  static final KafkaContainer kafka;
+
+  static {
+    kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
+    kafka.start();
+  }
 
   @DynamicPropertySource
   static void overrideProperties(DynamicPropertyRegistry registry) {
