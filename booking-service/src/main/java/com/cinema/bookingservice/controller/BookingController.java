@@ -29,18 +29,27 @@ public class BookingController {
   private final SessionSeatService sessionSeatService;
 
   @PostMapping
-  public ResponseEntity<BookingReservationResponse> reserveSeats(
+  public ResponseEntity<?> reserveSeats(
       @Valid @RequestBody SeatReservationRequest request) {
     try {
       BookingReservationResponse response = sessionSeatService.reserveSeats(
           request.movieSessionId(), request.seatIds(), request.userId());
-      return ResponseEntity.status(HttpStatus.CREATED)
-          .body(response);
+      return ResponseEntity.ok(response);
     } catch (DoubleBokingException e) {
       return ResponseEntity.status(HttpStatus.CONFLICT)
-          .build();
+          .body(new ReservationConflictResponse(
+              "One or more seats were already reserved by another user. Please try again.",
+              request.movieSessionId(),
+              request.seatIds()
+          ));
     }
   }
+
+  public record ReservationConflictResponse(
+      String message,
+      UUID movieSessionId,
+      List<UUID> seatIds
+  ) {}
 
   @GetMapping()
   public List<BookingResponse> getBookings(@RequestParam UUID userId) {

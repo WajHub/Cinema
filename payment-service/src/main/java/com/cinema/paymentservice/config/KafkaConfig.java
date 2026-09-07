@@ -12,28 +12,17 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class KafkaConfig {
 
-  private final String paymentStartedTopic;
   private final String paymentCompletedTopic;
   private final String paymentCancelledTopic;
   private final String refundCompletedTopic;
 
-  public KafkaConfig(@Value("${app.kafka.topics.payment-started}") String paymentStartedTopic,
+  public KafkaConfig(
       @Value("${app.kafka.topics.payment-completed}") String paymentCompletedTopic,
       @Value("${app.kafka.topics.payment-cancelled}") String paymentCancelledTopic,
       @Value("${app.kafka.topics.refund-completed}") String refundCompletedTopic) {
-    this.paymentStartedTopic = paymentStartedTopic;
     this.paymentCompletedTopic = paymentCompletedTopic;
     this.paymentCancelledTopic = paymentCancelledTopic;
     this.refundCompletedTopic = refundCompletedTopic;
-  }
-
-  @Bean
-  public NewTopic setupPaymentStartedTopic() {
-    return TopicBuilder.name(paymentStartedTopic)
-        .partitions(3)
-        .replicas(1)
-        .config(TopicConfig.RETENTION_MS_CONFIG, "86400000")
-        .build();
   }
 
   @Bean

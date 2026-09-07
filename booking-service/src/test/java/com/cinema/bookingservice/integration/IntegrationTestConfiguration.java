@@ -1,13 +1,19 @@
 package com.cinema.bookingservice.integration;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import com.cinema.bookingservice.client.PaymentServiceClient;
 import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.MovieSessionRepository;
 import com.cinema.bookingservice.repository.OutboxEventRepository;
 import com.cinema.bookingservice.repository.SessionSeatRepository;
 import com.cinema.bookingservice.repository.UserRepository;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -25,6 +31,9 @@ class IntegrationTestConfiguration {
 
   @Autowired
   protected KafkaTemplate<String, Object> kafkaTemplate;
+
+  @MockitoBean
+  protected PaymentServiceClient paymentServiceClient;
 
   static final KafkaContainer kafka;
 
@@ -60,5 +69,12 @@ class IntegrationTestConfiguration {
     bookingRepository.deleteAllInBatch();
     movieSessionRepository.deleteAllInBatch();
     userRepository.deleteAllInBatch();
+
+    when(paymentServiceClient.createCheckoutSession(any()))
+        .thenAnswer(invocation -> {
+          PaymentServiceClient.CreatePaymentRequest req = invocation.getArgument(0);
+          return new PaymentServiceClient.CreatePaymentResponse(
+              UUID.randomUUID(), req.bookingId(), "cs_test_mock", "https://checkout.stripe.com/c/pay/cs_test_mock");
+        });
   }
 }

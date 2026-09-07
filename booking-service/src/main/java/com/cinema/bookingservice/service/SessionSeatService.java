@@ -1,22 +1,19 @@
 package com.cinema.bookingservice.service;
 
+import com.cinema.bookingservice.client.PaymentServiceClient;
 import com.cinema.bookingservice.dto.BookingReservationResponse;
 import com.cinema.bookingservice.dto.SeatResponse;
 import com.cinema.bookingservice.entity.BookingEntity;
 import com.cinema.bookingservice.entity.BookingStatus;
 import com.cinema.bookingservice.entity.MovieSessionEntity;
-import com.cinema.bookingservice.entity.OutboxEventEntity;
 import com.cinema.bookingservice.entity.SeatReservationStatus;
 import com.cinema.bookingservice.entity.SessionSeatEntity;
 import com.cinema.bookingservice.entity.UserEntity;
 import com.cinema.bookingservice.exception.DoubleBokingException;
 import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.MovieSessionRepository;
-import com.cinema.bookingservice.repository.OutboxEventRepository;
 import com.cinema.bookingservice.repository.SessionSeatRepository;
 import com.cinema.bookingservice.repository.UserRepository;
-import com.cinema.kafka.event.PaymentStartedEventPayload;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -39,8 +36,7 @@ public class SessionSeatService {
   private final BookingRepository bookingRepository;
   private final MovieSessionRepository movieSessionRepository;
   private final UserRepository userRepository;
-  private final OutboxEventRepository outboxEventRepository;
-  private final ObjectMapper objectMapper;
+  private final PaymentServiceClient paymentServiceClient;
 
   public BookingReservationResponse reserveSeats(UUID movieSessionId, List<UUID> sessionSeatIds, UUID userId) {
     MovieSessionEntity session = movieSessionRepository.findById(movieSessionId)
@@ -82,11 +78,23 @@ public class SessionSeatService {
         seat.setStatus(SeatReservationStatus.TEMPORARY);
         seat.setBooking(savedBookingEntity);
       });
-      persistPaymentStartedEvent(savedBookingEntity, session, seats);
+
+      PaymentServiceClient.CreatePaymentResponse paymentResponse = paymentServiceClient.createCheckoutSession(
+          new PaymentServiceClient.CreatePaymentRequest(
+              savedBookingEntity.getId(),
+              session.getCatalogSessionId(),
+              seats.stream().map(SessionSeatEntity::getCatalogSeatId).toList(),
+              totalPrice
+          )
+      );
 
       sessionSeatRepository.saveAll(seats);
 
-      return new BookingReservationResponse(booking.getId(), mapToSeatResponses(seats));
+      return new BookingReservationResponse(
+          savedBookingEntity.getId(),
+          mapToSeatResponses(seats),
+          paymentResponse.checkoutUrl()
+      );
     } catch (OptimisticLockingFailureException e) {
       throw new DoubleBokingException("One or more seats were reserved by another user. Please try again.", e);
     }
@@ -104,37 +112,5 @@ public class SessionSeatService {
                 .name())
             .build())
         .toList();
-  }
-
-  private void persistPaymentStartedEvent(BookingEntity booking, MovieSessionEntity session, List<SessionSeatEntity> seats) {
-    try {
-      PaymentStartedEventPayload payload = PaymentStartedEventPayload.newBuilder()
-          .setBookingId(booking.getId()
-              .toString())
-          .setUserId(booking.getUser()
-              .getId()
-              .toString())
-          .setCatalogSessionId(session.getCatalogSessionId()
-              .toString())
-          .setCatalogSeatIds(seats.stream()
-              .map(s -> s.getCatalogSeatId()
-                  .toString())
-              .toList())
-          .setTotalPrice(booking.getTotalPrice()
-              .toPlainString())
-          .setCreatedAt(OffsetDateTime.now()
-              .toString())
-          .build();
-
-      OutboxEventEntity outboxEvent = new OutboxEventEntity();
-      outboxEvent.setAggregateType("booking");
-      outboxEvent.setAggregateId(booking.getId());
-      outboxEvent.setType("PaymentStartedEvent");
-      outboxEvent.setPayload(objectMapper.writeValueAsString(payload));
-
-      outboxEventRepository.save(outboxEvent);
-    } catch (Exception exception) {
-      throw new IllegalStateException("Failed to persist PaymentStartedEvent to outbox", exception);
-    }
   }
 }
