@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 ALTER TABLE payment_status_history
 DROP CONSTRAINT IF EXISTS fk_payment_status_history_payment;
 
