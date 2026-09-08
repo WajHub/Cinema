@@ -5,4 +5,5 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StripeWebhookEventRepository extends JpaRepository<StripeWebhookEventEntity, UUID> {
+  boolean existsByStripeEventId(String stripeEventId);
 }
