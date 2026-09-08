@@ -5,18 +5,18 @@ ALTER TABLE refund
 DROP CONSTRAINT IF EXISTS fk_refund_payment;
 
 ALTER TABLE payment
-    ADD COLUMN id_uuid uuid DEFAULT gen_random_uuid() NOT NULL;
+    ADD COLUMN id_uuid uuid NOT NULL;
 
 ALTER TABLE payment_status_history
-    ADD COLUMN id_uuid uuid DEFAULT gen_random_uuid() NOT NULL,
+    ADD COLUMN id_uuid uuid NOT NULL,
     ADD COLUMN payment_id_uuid uuid;
 
 ALTER TABLE refund
-    ADD COLUMN id_uuid uuid DEFAULT gen_random_uuid() NOT NULL,
+    ADD COLUMN id_uuid uuid NOT NULL,
     ADD COLUMN payment_id_uuid uuid;
 
 ALTER TABLE stripe_webhook_event
-    ADD COLUMN id_uuid uuid DEFAULT gen_random_uuid() NOT NULL;
+    ADD COLUMN id_uuid uuid NOT NULL;
 
 UPDATE payment_status_history history
 SET payment_id_uuid = payment.id_uuid
@@ -65,18 +65,6 @@ ALTER TABLE refund
     ADD CONSTRAINT refund_pkey PRIMARY KEY (id),
     ADD CONSTRAINT fk_refund_payment
         FOREIGN KEY (payment_id) REFERENCES payment (id);
-
-ALTER TABLE payment
-    ALTER COLUMN id SET DEFAULT gen_random_uuid();
-
-ALTER TABLE payment_status_history
-    ALTER COLUMN id SET DEFAULT gen_random_uuid();
-
-ALTER TABLE refund
-    ALTER COLUMN id SET DEFAULT gen_random_uuid();
-
-ALTER TABLE stripe_webhook_event
-    ALTER COLUMN id SET DEFAULT gen_random_uuid();
 
 ALTER TABLE payment
     ADD CONSTRAINT chk_payment_status
