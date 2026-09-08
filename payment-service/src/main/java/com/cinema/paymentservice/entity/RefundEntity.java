@@ -34,7 +34,7 @@ public class RefundEntity {
   @JoinColumn(name = "payment_id", nullable = false)
   private PaymentEntity payment;
 
-  @Column(name = "stripe_refund_id", nullable = false, unique = true)
+  @Column(name = "stripe_refund_id", unique = true)
   private String stripeRefundId;
 
   @Column(name = "total_price", nullable = false, precision = 19, scale = 2)

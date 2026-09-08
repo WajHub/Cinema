@@ -8,6 +8,8 @@ import java.util.UUID;
 public record SeatReservationRequest(//
     @NotNull(message = "User ID is required") //
     UUID userId, //
+    @NotNull(message = "Movie session ID is required") //
+    UUID movieSessionId, //
     @NotEmpty(message = "At least one seat ID is required") //
     List<UUID> seatIds //
 ) {

@@ -5,15 +5,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.cinema.bookingservice.client.PaymentServiceClient;
 import com.cinema.bookingservice.entity.BookingEntity;
 import com.cinema.bookingservice.entity.MovieSessionEntity;
-import com.cinema.bookingservice.entity.OutboxEventEntity;
 import com.cinema.bookingservice.entity.SeatReservationStatus;
 import com.cinema.bookingservice.entity.SessionSeatEntity;
 import com.cinema.bookingservice.entity.UserEntity;
 import com.cinema.bookingservice.repository.BookingRepository;
 import com.cinema.bookingservice.repository.MovieSessionRepository;
-import com.cinema.bookingservice.repository.OutboxEventRepository;
 import com.cinema.bookingservice.repository.SessionSeatRepository;
 import com.cinema.bookingservice.repository.UserRepository;
 import java.math.BigDecimal;
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,16 +42,13 @@ class SessionSeatServiceTest {
   private UserRepository userRepository;
 
   @Mock
-  private OutboxEventRepository outboxEventRepository;
-
-  @Spy
-  private com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.cinema.bookingservice.config.JacksonConfig().objectMapper();
+  private PaymentServiceClient paymentServiceClient;
 
   @InjectMocks
   private SessionSeatService service;
 
   @Test
-  void reservesMultipleSeatsAndWritesOneOutboxEvent() {
+  void reservesMultipleSeatsAndCallsPaymentServiceClient() {
     UUID sessionId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     SessionSeatEntity firstSeat = seat(UUID.randomUUID(), "A", 1, "10.00");
@@ -69,15 +64,26 @@ class SessionSeatServiceTest {
       booking.setId(UUID.randomUUID());
       return booking;
     });
+    when(paymentServiceClient.createCheckoutSession(any()))
+        .thenAnswer(invocation -> {
+          PaymentServiceClient.CreatePaymentRequest request = invocation.getArgument(0);
+          return new PaymentServiceClient.CreatePaymentResponse(
+              UUID.randomUUID(),
+              request.bookingId(),
+              "cs_test_123",
+              "https://checkout.stripe.com/c/pay/cs_test_123"
+          );
+        });
 
     var response = service.reserveSeats(sessionId, List.of(firstSeat.getId(), secondSeat.getId()), userId);
 
     assertThat(response.seats()).hasSize(2);
+    assertThat(response.checkoutUrl()).isEqualTo("https://checkout.stripe.com/c/pay/cs_test_123");
     assertThat(firstSeat.getStatus()).isEqualTo(SeatReservationStatus.TEMPORARY);
     assertThat(secondSeat.getStatus()).isEqualTo(SeatReservationStatus.TEMPORARY);
     verify(bookingRepository).save(any(BookingEntity.class));
     verify(sessionSeatRepository).saveAll(List.of(firstSeat, secondSeat));
-    verify(outboxEventRepository).save(any(OutboxEventEntity.class));
+    verify(paymentServiceClient).createCheckoutSession(any());
   }
 
   private SessionSeatEntity seat(UUID id, String row, int number, String price) {

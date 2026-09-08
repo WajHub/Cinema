@@ -5,5 +5,6 @@ import java.util.UUID;
 
 public record BookingReservationResponse(
     UUID bookingId,
-    List<SeatResponse> seats
+    List<SeatResponse> seats,
+    String checkoutUrl
 ) {}
