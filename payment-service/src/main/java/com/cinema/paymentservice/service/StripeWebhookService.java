@@ -78,7 +78,7 @@ public class StripeWebhookService {
       }
     }
     try {
-      return objectMapper.readValue(payload, Event.class);
+      return Event.GSON.fromJson(payload, Event.class);
     } catch (Exception e) {
       throw new IllegalArgumentException("Failed to parse Stripe webhook payload JSON", e);
     }
