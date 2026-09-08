@@ -86,7 +86,8 @@ public class StripeWebhookService {
 
   private void handleCheckoutSessionCompleted(Event event) {
     Session session = extractSession(event);
-    if (session == null) return;
+    if (session == null)
+      return;
 
     paymentRepository.findByStripeCheckoutSessionId(session.getId())
         .ifPresent(payment -> {
@@ -105,7 +106,8 @@ public class StripeWebhookService {
 
   private void handleCheckoutSessionCancelled(Event event) {
     Session session = extractSession(event);
-    if (session == null) return;
+    if (session == null)
+      return;
 
     paymentRepository.findByStripeCheckoutSessionId(session.getId())
         .ifPresent(payment -> {
@@ -122,8 +124,10 @@ public class StripeWebhookService {
   private Session extractSession(Event event) {
     EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
     StripeObject stripeObject = null;
-    if (deserializer.getObject().isPresent()) {
-      stripeObject = deserializer.getObject().get();
+    if (deserializer.getObject()
+        .isPresent()) {
+      stripeObject = deserializer.getObject()
+          .get();
     } else {
       try {
         stripeObject = deserializer.deserializeUnsafe();
@@ -148,13 +152,18 @@ public class StripeWebhookService {
   private void persistCompletedOutboxEvent(PaymentEntity payment) {
     try {
       PaymentCompletedEventPayload payload = PaymentCompletedEventPayload.newBuilder()
-          .setPaymentId(payment.getId().toString())
-          .setBookingId(payment.getBookingId().toString())
-          .setTotalPrice(payment.getTotalPrice().toPlainString())
+          .setPaymentId(payment.getId()
+              .toString())
+          .setBookingId(payment.getBookingId()
+              .toString())
+          .setTotalPrice(payment.getTotalPrice()
+              .toPlainString())
           .setCurrency(payment.getCurrency())
           .setStripeCheckoutSessionId(payment.getStripeCheckoutSessionId())
-          .setCompletedAt(OffsetDateTime.now().toString())
-          .setStatus("completed")
+          .setCompletedAt(OffsetDateTime.now()
+              .toString())
+          .setStatus(PaymentStatus.COMPLETED.name()
+              .toLowerCase())
           .build();
 
       OutboxEventEntity outbox = new OutboxEventEntity();
@@ -171,16 +180,22 @@ public class StripeWebhookService {
   private void persistCancelledOutboxEvent(PaymentEntity payment, String reason) {
     try {
       PaymentCancelledEventPayload payload = PaymentCancelledEventPayload.newBuilder()
-          .setPaymentId(payment.getId().toString())
-          .setBookingId(payment.getBookingId().toString())
-          .setCatalogSessionId(payment.getCatalogSessionId().toString())
+          .setPaymentId(payment.getId()
+              .toString())
+          .setBookingId(payment.getBookingId()
+              .toString())
+          .setCatalogSessionId(payment.getCatalogSessionId()
+              .toString())
           .setCatalogSeatIds(readSeatIds(payment.getCatalogSeatIds()))
-          .setTotalPrice(payment.getTotalPrice().toPlainString())
+          .setTotalPrice(payment.getTotalPrice()
+              .toPlainString())
           .setCurrency(payment.getCurrency())
           .setStripeCheckoutSessionId(payment.getStripeCheckoutSessionId())
-          .setCancelledAt(OffsetDateTime.now().toString())
+          .setCancelledAt(OffsetDateTime.now()
+              .toString())
           .setReason(reason)
-          .setStatus("cancelled")
+          .setStatus(PaymentStatus.CANCELLED.name()
+              .toLowerCase())
           .build();
 
       OutboxEventEntity outbox = new OutboxEventEntity();
