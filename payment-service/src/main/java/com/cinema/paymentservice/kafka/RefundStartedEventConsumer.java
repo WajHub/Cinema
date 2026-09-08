@@ -9,7 +9,12 @@ import com.cinema.paymentservice.entity.RefundStatus;
 import com.cinema.paymentservice.repository.OutboxEventRepository;
 import com.cinema.paymentservice.repository.PaymentRepository;
 import com.cinema.paymentservice.repository.RefundRepository;
+import com.cinema.paymentservice.entity.PaymentEntity;
+import com.cinema.paymentservice.entity.PaymentStatusHistoryEntity;
+import com.cinema.paymentservice.repository.PaymentStatusHistoryRepository;
+import com.cinema.paymentservice.service.StripeRefundService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stripe.model.Refund;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,35 +31,46 @@ public class RefundStartedEventConsumer {
 
   private final RefundRepository refundRepository;
   private final PaymentRepository paymentRepository;
+  private final PaymentStatusHistoryRepository statusHistoryRepository;
   private final ObjectMapper objectMapper;
   private final OutboxEventRepository outboxEventRepository;
+  private final StripeRefundService stripeRefundService;
 
   @KafkaListener(topics = "${app.kafka.topics.refund-started}")
   @Transactional
   public void consume(RefundStartedEvent event) {
     var eventPayload = event.getPayload();
-    UUID bookingId = UUID.fromString(eventPayload.getBookingId()
-        .toString());
-    var payment = paymentRepository.findByBookingId(bookingId)
-        .orElseThrow();
+    UUID bookingId = UUID.fromString(eventPayload.getBookingId().toString());
+    var payment = paymentRepository.findByBookingId(bookingId).orElseThrow();
 
     RefundEntity refund = new RefundEntity();
     refund.setPayment(payment);
     refund.setStatus(IN_PROGRESS);
     refund.setTotalPrice(payment.getTotalPrice());
     refund.setCurrency(eventPayload.getCurrency());
-    refund.setStripeRefundId(UUID.randomUUID()
-        .toString());
     refundRepository.save(refund);
 
     payment.setCurrentStatus(PaymentStatus.REFUND_PENDING);
     paymentRepository.save(payment);
 
+    Refund stripeRefund = stripeRefundService.processRefund(payment);
+
+    refund.setStripeRefundId(stripeRefund.getId());
     refund.setStatus(COMPLETED);
     RefundEntity savedRefund = refundRepository.save(refund);
+
     payment.setCurrentStatus(PaymentStatus.REFUNDED);
     paymentRepository.save(payment);
+    saveStatusHistory(payment, PaymentStatus.REFUNDED);
+
     persistCompletedEvent(savedRefund);
+  }
+
+  private void saveStatusHistory(PaymentEntity payment, PaymentStatus status) {
+    PaymentStatusHistoryEntity history = new PaymentStatusHistoryEntity();
+    history.setPayment(payment);
+    history.setStatus(status);
+    statusHistoryRepository.save(history);
   }
 
   private void persistCompletedEvent(RefundEntity refund) {
