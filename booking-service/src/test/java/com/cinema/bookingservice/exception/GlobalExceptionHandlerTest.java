@@ -9,6 +9,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -20,6 +21,8 @@ class GlobalExceptionHandlerTest {
 
   private GlobalExceptionHandler handler;
   private HttpServletRequest request;
+
+  private static void dummyMethod(String param) {}
 
   @BeforeEach
   void setUp() {
@@ -56,10 +59,12 @@ class GlobalExceptionHandlerTest {
 
   @Test
   @DisplayName("Should handle MethodArgumentNotValidException and include field validation errors")
-  void handleMethodArgumentNotValidException() {
+  void handleMethodArgumentNotValidException() throws Exception {
+    var parameter = new MethodParameter(
+        GlobalExceptionHandlerTest.class.getDeclaredMethod("dummyMethod", String.class), 0);
     var bindingResult = new BeanPropertyBindingResult(new Object(), "target");
     bindingResult.addError(new FieldError("target", "seatIds", "must not be empty"));
-    var ex = new MethodArgumentNotValidException(null, bindingResult);
+    var ex = new MethodArgumentNotValidException(parameter, bindingResult);
 
     ProblemDetail problem = handler.handleMethodArgumentNotValidException(ex, request);
 
