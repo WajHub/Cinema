@@ -1,7 +1,8 @@
-ervices:
+services:
   cinema-kafka-1:
     image: apache/kafka:latest
     container_name: cinema-kafka-1
+    restart: always
     ports:
       - "9092:9092"
       - "9094:9094"
@@ -27,6 +28,7 @@ ervices:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_NUM_PARTITIONS: 1
+      KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
       interval: 5s
@@ -40,7 +42,7 @@ ervices:
   schema-registry:
     image: confluentinc/cp-schema-registry:7.6.0
     container_name: cinema-schema-registry
-    restart: no
+    restart: always
     ports:
       - "8081:8081"
     depends_on:
@@ -50,10 +52,12 @@ ervices:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: cinema-kafka-1:9092
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_HEAP_OPTS: "-Xmx256m -Xms128m"
 
   cinema-kafka-ui:
     image: ghcr.io/kafbat/kafka-ui:latest
     container_name: cinema-kafka-ui
+    restart: always
     ports:
       - "9090:8080"
     environment:
@@ -61,6 +65,7 @@ ervices:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: cinema-kafka-1:9092
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
       DYNAMIC_CONFIG_ENABLED: 'true'
+      JAVA_TOOL_OPTIONS: "-Xmx256m -Xms128m"
     depends_on:
       cinema-kafka-1:
         condition: service_healthy

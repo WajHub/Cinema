@@ -15,6 +15,8 @@ resource "azurerm_container_group" "catalog" {
     protocol = "TCP"
   }]
 
+  dns_name_label      = "cinema-catalog-service-dev"   
+
   container {
     name         = "cr-cinema-catalog-service-dev-pl-01"
     image        = "crcinemadevpl01.azurecr.io/cinema-catalog-service:latest"
