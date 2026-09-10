@@ -14,6 +14,8 @@ resource "azurerm_container_group" "booking" {
     protocol = "TCP"
   }]
 
+  dns_name_label = "cinema-booking-service-dev"
+
   container {
     name         = "cr-cinema-booking-service-dev-pl-01"
     image        = "crcinemadevpl01.azurecr.io/cinema-booking-service:latest"
@@ -25,9 +27,13 @@ resource "azurerm_container_group" "booking" {
     environment_variables = {
       BOOKING_DB_URL         = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/booking_service"
       BOOKING_DB_USERNAME    = "psqladmin"
-      BOOKING_DB_PASSWORD    = var.db_password
       KAFKA_BOOTSTRAP_SERVER = var.kafka_server
       SCHEMA_REGISTRY_URL    = var.schema_registry_url
+      PAYMENT_SERVICE_URL    = "http://cinema-payment-service-dev.polandcentral.azurecontainer.io:8084"
+    }
+
+    secure_environment_variables = {
+      BOOKING_DB_PASSWORD = var.db_password
     }
 
     ports {
