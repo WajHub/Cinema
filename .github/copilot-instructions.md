@@ -58,6 +58,7 @@ Each service follows a consistent pattern:
 │   │   ├── repository/                       # Spring Data repositories
 │   │   ├── service/                          # Business logic
 │   │   ├── controller/                       # REST endpoints
+│   │   ├── exception/                        # GlobalExceptionHandler (@RestControllerAdvice)
 │   │   ├── config/                            # Application and Kafka configuration
 │   │   ├── kafka/                             # Kafka consumers, producers, and publishers
 │   │   │   └── event/                         # Plain event payload records for outbox JSON
@@ -72,7 +73,7 @@ Each service follows a consistent pattern:
 **Services:**
 - **catalog-service** (port 8083): Movies, cinemas, auditoriums, sessions management
 - **booking-service** (port 8082): Ticket reservations and seat management  
-- **payment-service** (port 8082): Payment processing and refunds
+- **payment-service** (port 8084): Payment processing and refunds
 
 ### Infrastructure & Configuration
 ```
@@ -112,6 +113,10 @@ docker/postgres/init/
 5. **Scheduler-Driven Event Publishing**: Each service has exactly one `@Scheduled` outbox component (`OutboxEventScheduler.publishPendingEvents()`). It polls the outbox table periodically (default 2000ms, configurable via `app.outbox.poll-delay-ms`), selects a matching event producer by event type, and deletes successfully delegated events atomically. Event producers only convert payloads and publish Kafka Avro messages; they do not poll the outbox.
 
 6. **Infrastructure as Code:** Azure deployment via Terraform; secrets managed separately (db_password, ACR credentials) to support multi-environment deployments.
+
+7. **Standardized Exception Handling (RFC 9457 `ProblemDetail`):** All microservices implement an analogical `@RestControllerAdvice` (`GlobalExceptionHandler`) located in `com.cinema.{service}.exception`. All caught exceptions (`ResponseStatusException`, validation errors, domain conflicts, unreadable JSON, static resource errors, etc.) return a uniform RFC 9457 `ProblemDetail` JSON payload (`status`, `title`, `detail`, `instance`, `timestamp`, and `validationErrors` map for field failures). Controllers must not use inline `try-catch` blocks for domain exceptions.
+
+8. **Stripe Hosted Checkout & Refund Integration:** `payment-service` creates Stripe Checkout Sessions (`cs_...`) via `Session.create(...)` and tracks `stripe_checkout_session_id`. `StripeWebhookService` parses and verifies webhooks using `stripe.webhook.secret`, handling `checkout.session.completed` (saves `stripe_payment_intent_id` and emits `PaymentCompletedEvent` outbox event) and `checkout.session.expired` / `payment_intent.payment_failed` (emits `PaymentCancelledEvent`). Asynchronous refunds are executed via `StripeRefundService` using `Refund.create(...)` upon receiving `RefundStartedEvent`.
 
 ---
 
