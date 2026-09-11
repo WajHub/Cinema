@@ -45,8 +45,25 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Restart ACI to pull new image
-        run: |
-          az container restart \
-            --name cr-cinema-${{ inputs.service-path }}-dev-pl-01 \
-            --resource-group rg-cinema-dev-pl
+      - name: Deploy to Azure (Start if Stopped, Restart if Running)                                                                                         
+        run: |                                                                                                                                               
+          # 1. Get the current status of the container group                                                                                                 
+          STATE=$(az container show \                                                                                                                        
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \                                                                                           
+            --name cinema-payment-service \                                                                                                                  
+            --query "instanceView.state" -o tsv)                                                                                                             
+                                                                                                                                                            
+          echo "Current Container State: $STATE"                                                                                                             
+                                                                                                                                                            
+          # 2. Start if Stopped/Terminated, or Restart if Running                                                                                            
+          if [ "$STATE" == "Running" ]; then                                                                                                                 
+            echo "Container is Running. Restarting..."                                                                                                       
+            az container restart \                                                                                                                           
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \                                                                                         
+              --name cinema-payment-service                                                                                                                  
+          else                                                                                                                                               
+            echo "Container is not running ($STATE). Starting..."                                                                                            
+            az container start \                                                                                                                             
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \                                                                                         
+              --name cinema-payment-service                                                                                                                  
+          fi 
