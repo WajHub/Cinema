@@ -26,11 +26,12 @@ resource "azurerm_container_group" "catalog" {
     memory_limit = 1.5
 
     environment_variables = {
-      CATALOG_DB_URL         = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/catalog_service"
-      CATALOG_DB_USERNAME    = "psqladmin"
-      CATALOG_DB_PASSWORD    = var.db_password
-      KAFKA_BOOTSTRAP_SERVER = var.kafka_server
-      SCHEMA_REGISTRY_URL    = var.schema_registry_url
+      CATALOG_DB_URL           = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/catalog_service"
+      CATALOG_DB_USERNAME      = "psqladmin"
+      CATALOG_DB_PASSWORD      = var.db_password
+      KAFKA_BOOTSTRAP_SERVER   = var.kafka_server
+      SCHEMA_REGISTRY_URL      = var.schema_registry_url
+      KAFKA_AUTO_CREATE_TOPICS = "false"
     }
 
     ports {
