@@ -86,7 +86,8 @@ public class RefundStartedEventConsumer {
           .build();
       OutboxEventEntity event = new OutboxEventEntity();
       event.setAggregateType("refund");
-      event.setAggregateId(refund.getId());
+      event.setAggregateId(refund.getPayment()
+          .getBookingId());
       event.setType("RefundCompletedEvent");
       event.setPayload(objectMapper.writeValueAsString(payload));
       outboxEventRepository.save(event);

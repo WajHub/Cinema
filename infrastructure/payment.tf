@@ -33,6 +33,7 @@ resource "azurerm_container_group" "payment" {
       STRIPE_SESSION_EXPIRATION_MINUTES = "30"
       STRIPE_SUCCESS_URL                = "http://cinema-payment-service-dev.polandcentral.azurecontainer.io:8084/api/v1/payments/success?bookingId={BOOKING_ID}"
       STRIPE_CANCEL_URL                 = "http://cinema-payment-service-dev.polandcentral.azurecontainer.io:8084/api/v1/payments/cancel?bookingId={BOOKING_ID}"
+      KAFKA_AUTO_CREATE_TOPICS          = "false"
     }
 
     secure_environment_variables = {

@@ -142,7 +142,7 @@ docker/postgres/init/
   - Calls `outboxEventRepository.lockNextBatch(batchSize)` for pessimistic locking to prevent duplicate publishing
   - Delegates each event to the producer matching its event type
   - Deletes successfully delegated events atomically
-- **Event Producers:** Each producer handles one or more explicitly supported event types, converts the plain outbox JSON payload to a generated Avro event, and publishes it with `KafkaTemplate`. Producers must not contain `@Scheduled` or call `lockNextBatch()`.
+- **Event Producers:** Each producer handles one or more explicitly supported event types, converts the plain outbox JSON payload to a generated Avro event, and publishes it with `KafkaTemplate`. Event producers must pass `outbox_event.aggregate_id` as the message key to `KafkaTemplate.send(topic, event.getAggregateId().toString(), payload)` to enforce partition colocation and in-order processing per domain aggregate (e.g. Session or Booking). Producers must not contain `@Scheduled` or call `lockNextBatch()`.
 - **Configuration:** Outbox polling delay is configurable per environment via `app.outbox.poll-delay-ms` property (tests use higher delays like 600000ms to disable auto-polling)
 
 ### Coding Standards

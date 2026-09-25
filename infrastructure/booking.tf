@@ -25,11 +25,12 @@ resource "azurerm_container_group" "booking" {
     memory_limit = 1
 
     environment_variables = {
-      BOOKING_DB_URL         = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/booking_service"
-      BOOKING_DB_USERNAME    = "psqladmin"
-      KAFKA_BOOTSTRAP_SERVER = var.kafka_server
-      SCHEMA_REGISTRY_URL    = var.schema_registry_url
-      PAYMENT_SERVICE_URL    = "http://cinema-payment-service-dev.polandcentral.azurecontainer.io:8084"
+      BOOKING_DB_URL           = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/booking_service"
+      BOOKING_DB_USERNAME      = "psqladmin"
+      KAFKA_BOOTSTRAP_SERVER   = var.kafka_server
+      SCHEMA_REGISTRY_URL      = var.schema_registry_url
+      PAYMENT_SERVICE_URL      = "http://cinema-payment-service-dev.polandcentral.azurecontainer.io:8084"
+      KAFKA_AUTO_CREATE_TOPICS = "false"
     }
 
     secure_environment_variables = {
