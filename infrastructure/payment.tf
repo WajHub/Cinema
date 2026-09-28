@@ -1,60 +1,98 @@
-resource "azurerm_container_group" "payment" {
-  name                = "cr-cinema-payment-service-dev-pl-01"
-  location            = "polandcentral"
-  resource_group_name = "rg-cinema-dev-pl"
-  ip_address_type     = "Public"
-  os_type             = "Linux"
-  restart_policy      = "Never"
-  sku                 = "Standard"
+resource "azurerm_container_app" "payment" {
+  name                         = "ca-payment-service-dev-pl-01"
+  container_app_environment_id = azurerm_container_app_environment.dev.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
 
-  exposed_port = [{
-    port     = 8084
-    protocol = "TCP"
-    }, {
-    port     = 80
-    protocol = "TCP"
-  }]
+  registry {
+    server               = var.acr_server
+    username             = var.acr_username
+    password_secret_name = "acr-password"
+  }
 
-  dns_name_label = "cinema-payment-service-dev"
-
-  container {
-    name         = "cr-cinema-payment-service-dev-pl-01"
-    image        = "crcinemadevpl01.azurecr.io/cinema-payment-service:latest"
-    cpu          = 1
-    cpu_limit    = 1
-    memory       = 1.5
-    memory_limit = 1.5
-
-    environment_variables = {
-      PAYMENT_DB_URL                    = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/payment_service"
-      PAYMENT_DB_USERNAME               = "psqladmin"
-      KAFKA_BOOTSTRAP_SERVER            = var.kafka_server
-      SCHEMA_REGISTRY_URL               = var.schema_registry_url
-      STRIPE_SESSION_EXPIRATION_MINUTES = "30"
-      STRIPE_SUCCESS_URL                = "http://cinema-payment-service-dev.polandcentral.azurecontainer.io:8084/api/v1/payments/success?bookingId={BOOKING_ID}"
-      STRIPE_CANCEL_URL                 = "http://cinema-payment-service-dev.polandcentral.azurecontainer.io:8084/api/v1/payments/cancel?bookingId={BOOKING_ID}"
-      KAFKA_AUTO_CREATE_TOPICS          = "false"
-    }
-
-    secure_environment_variables = {
-      PAYMENT_DB_PASSWORD   = var.db_password
-      STRIPE_SECRET_KEY     = var.stripe_secret_key
-      STRIPE_WEBHOOK_SECRET = var.stripe_webhook_secret
-    }
-
-    ports {
-      port     = 8084
-      protocol = "TCP"
-    }
-    ports {
-      port     = 80
-      protocol = "TCP"
+  ingress {
+    external_enabled = true
+    target_port      = 8084
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
     }
   }
 
-  image_registry_credential {
-    server   = var.acr_server
-    username = var.acr_username
-    password = var.acr_password
+  secret {
+    name  = "acr-password"
+    value = var.acr_password
+  }
+
+  secret {
+    name  = "db-password"
+    value = var.db_password
+  }
+
+  secret {
+    name  = "stripe-secret-key"
+    value = var.stripe_secret_key
+  }
+
+  secret {
+    name  = "stripe-webhook-secret"
+    value = var.stripe_webhook_secret
+  }
+
+  template {
+    min_replicas = 0
+    max_replicas = 1
+
+    container {
+      name   = "payment-service"
+      image  = "crcinemadevpl1.azurecr.io/cinema-payment-service:latest"
+      cpu    = 0.5
+      memory = "1.0Gi"
+
+      env {
+        name  = "PAYMENT_DB_URL"
+        value = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/payment_service"
+      }
+      env {
+        name  = "PAYMENT_DB_USERNAME"
+        value = "psqladmin"
+      }
+      env {
+        name        = "PAYMENT_DB_PASSWORD"
+        secret_name = "db-password"
+      }
+      env {
+        name  = "KAFKA_BOOTSTRAP_SERVER"
+        value = var.kafka_server
+      }
+      env {
+        name  = "SCHEMA_REGISTRY_URL"
+        value = var.schema_registry_url
+      }
+      env {
+        name        = "STRIPE_SECRET_KEY"
+        secret_name = "stripe-secret-key"
+      }
+      env {
+        name        = "STRIPE_WEBHOOK_SECRET"
+        secret_name = "stripe-webhook-secret"
+      }
+      env {
+        name  = "STRIPE_SESSION_EXPIRATION_MINUTES"
+        value = "30"
+      }
+      env {
+        name  = "STRIPE_SUCCESS_URL"
+        value = "https://ca-payment-service-dev-pl-01.${azurerm_container_app_environment.dev.default_domain}/api/v1/payments/success?bookingId={BOOKING_ID}"
+      }
+      env {
+        name  = "STRIPE_CANCEL_URL"
+        value = "https://ca-payment-service-dev-pl-01.${azurerm_container_app_environment.dev.default_domain}/api/v1/payments/cancel?bookingId={BOOKING_ID}"
+      }
+      env {
+        name  = "KAFKA_AUTO_CREATE_TOPICS"
+        value = "false"
+      }
+    }
   }
 }

@@ -4,10 +4,10 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
   auto_grow_enabled                 = false
   backup_retention_days             = 7
   geo_redundant_backup_enabled      = false
-  location                          = azurerm_resource_group.rg.location
-  resource_group_name               = azurerm_resource_group.rg.name
+  location                          = "polandcentral"
   name                              = "psql-cinema-dev-pl"
   public_network_access_enabled     = true
+  resource_group_name               = "rg-cinema-dev-pl"
   sku_name                          = "B_Standard_B1ms"
   storage_mb                        = 32768
   storage_tier                      = "P4"
@@ -17,7 +17,7 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
   authentication {
     active_directory_auth_enabled = true
     password_auth_enabled         = true
-    tenant_id                     = data.azurerm_client_config.current.tenant_id
+    tenant_id                     = "86760356-0022-486f-b793-a2d470bba5a5"
   }
 }
 

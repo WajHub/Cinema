@@ -11,25 +11,25 @@ Content-Type: application/json
 
 ###
 # @name getBookings
-GET http://{{booking-service}}/api/v1/bookings?userId=ca11ace7-0343-4774-b459-8a1a8a7c576d
+GET http://{{booking-service}}/api/v1/bookings?userId={{getUsers.response.body.$[0].id}}
 Content-Type: application/json
 
 --------------  POST  ------------------
 ###
 # @name createBooking
-POST http://localhost:8082/api/v1/bookings
+POST https://{{booking-service}}/api/v1/bookings
 Content-Type: application/json
 
 {
-  "userId": "ca11ace7-0343-4774-b459-8a1a8a7c576d",
-  "movieSessionId": "e516aed9-b67d-4427-9478-fd53acc3b2af",
+  "userId": "{{getUsers.response.body.$[0].id}}",
+  "movieSessionId": "{{getSessions.response.body.$[0].id}}",
   "seatIds": [
-    "a8e3cca2-ae6d-4ac7-9378-57b97d8bc4bc"
+    "0823586e-e22e-46fd-8440-35a972032c67"
   ]
 }
 
 ###
-POST http://localhost:8082/api/v1/bookings/adc68e1a-8b01-43bf-b958-1b4fe2ef09cb/cancel
+POST https://{{booking-service}}/api/v1/bookings/b4f0751d-7713-49f6-9ca2-08f00dd067f4/cancel
 Content-Type: application/json
 
 

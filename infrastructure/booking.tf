@@ -1,55 +1,72 @@
-resource "azurerm_container_group" "booking" {
-  name                = "cr-cinema-booking-service-dev-pl-01"
-  resource_group_name = "rg-cinema-dev-pl"
-  location            = "polandcentral"
-  ip_address_type     = "Public"
-  os_type             = "Linux"
-  restart_policy      = "Never"
+resource "azurerm_container_app" "booking" {
+  name                         = "ca-booking-service-dev-pl-01"
+  container_app_environment_id = azurerm_container_app_environment.dev.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
 
-  exposed_port = [{
-    port     = 8082
-    protocol = "TCP"
-    }, {
-    port     = 80
-    protocol = "TCP"
-  }]
+  registry {
+    server               = var.acr_server
+    username             = var.acr_username
+    password_secret_name = "acr-password"
+  }
 
-  dns_name_label = "cinema-booking-service-dev"
-
-  container {
-    name         = "cr-cinema-booking-service-dev-pl-01"
-    image        = "crcinemadevpl01.azurecr.io/cinema-booking-service:latest"
-    cpu          = 1
-    cpu_limit    = 1
-    memory       = 1
-    memory_limit = 1
-
-    environment_variables = {
-      BOOKING_DB_URL           = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/booking_service"
-      BOOKING_DB_USERNAME      = "psqladmin"
-      KAFKA_BOOTSTRAP_SERVER   = var.kafka_server
-      SCHEMA_REGISTRY_URL      = var.schema_registry_url
-      PAYMENT_SERVICE_URL      = "http://cinema-payment-service-dev.polandcentral.azurecontainer.io:8084"
-      KAFKA_AUTO_CREATE_TOPICS = "false"
-    }
-
-    secure_environment_variables = {
-      BOOKING_DB_PASSWORD = var.db_password
-    }
-
-    ports {
-      port     = 8082
-      protocol = "TCP"
-    }
-    ports {
-      port     = 80
-      protocol = "TCP"
+  ingress {
+    external_enabled = true
+    target_port      = 8082
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
     }
   }
 
-  image_registry_credential {
-    server   = var.acr_server
-    username = var.acr_username
-    password = var.acr_password
+  secret {
+    name  = "acr-password"
+    value = var.acr_password
+  }
+
+  secret {
+    name  = "db-password"
+    value = var.db_password
+  }
+
+  template {
+    min_replicas = 0
+    max_replicas = 1
+
+    container {
+      name   = "booking-service"
+      image  = "crcinemadevpl1.azurecr.io/cinema-booking-service:latest"
+      cpu    = 0.5
+      memory = "1.0Gi"
+
+      env {
+        name  = "BOOKING_DB_URL"
+        value = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/booking_service"
+      }
+      env {
+        name  = "BOOKING_DB_USERNAME"
+        value = "psqladmin"
+      }
+      env {
+        name        = "BOOKING_DB_PASSWORD"
+        secret_name = "db-password"
+      }
+      env {
+        name  = "KAFKA_BOOTSTRAP_SERVER"
+        value = var.kafka_server
+      }
+      env {
+        name  = "SCHEMA_REGISTRY_URL"
+        value = var.schema_registry_url
+      }
+      env {
+        name  = "PAYMENT_SERVICE_URL"
+        value = "https://ca-payment-service-dev-pl-01.${azurerm_container_app_environment.dev.default_domain}"
+      }
+      env {
+        name  = "KAFKA_AUTO_CREATE_TOPICS"
+        value = "false"
+      }
+    }
   }
 }

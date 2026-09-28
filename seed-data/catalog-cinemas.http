@@ -7,7 +7,7 @@ Content-Type: application/json
 
 --------------  POST  ------------------
 ### 
-POST http://{{catalog-service}}/api/v1/cinemas
+POST https://{{catalog-service}}/api/v1/cinemas
 Content-Type: application/json
 
 {

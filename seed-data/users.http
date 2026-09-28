@@ -7,7 +7,7 @@ Content-Type: application/json
 
 --------------  POST  ------------------
 ###
-POST http://{{booking-service}}/api/v1/users
+POST https://{{booking-service}}/api/v1/users
 Content-Type: application/json
 
 {
@@ -16,7 +16,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://{{booking-service}}/api/v1/users
+POST https://{{booking-service}}/api/v1/users
 Content-Type: application/json
 
 {
