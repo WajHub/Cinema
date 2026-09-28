@@ -9,7 +9,7 @@ Content-Type: application/json
 --------------  POST  ------------------
 
 ###
-POST http://{{catalog-service}}/api/v1/auditoriums
+POST https://{{catalog-service}}/api/v1/auditoriums
 Content-Type: application/json
 
 {
@@ -32,7 +32,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://{{catalog-service}}/api/v1/auditoriums
+POST https://{{catalog-service}}/api/v1/auditoriums
 Content-Type: application/json
 
 {
