@@ -51,4 +51,9 @@ public class CinemaController {
   public void delete(@PathVariable UUID id) {
     cinemaService.delete(id);
   }
+
+  @GetMapping("/test")
+  public String test() {
+    return "Cinema service is working!";
+  }
 }
