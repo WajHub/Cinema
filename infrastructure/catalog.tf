@@ -1,52 +1,63 @@
-resource "azurerm_container_group" "catalog" {
-  name                = "cr-cinema-catalog-service-dev-pl-01"
-  location            = "polandcentral"
-  resource_group_name = "rg-cinema-dev-pl"
-  ip_address_type     = "Public"
-  os_type             = "Linux"
-  restart_policy      = "Never"
-  sku                 = "Standard"
+resource "azurerm_container_app" "catalog" {
+  name                         = "ca-catalog-service-dev-pl-01"
+  container_app_environment_id = azurerm_container_app_environment.dev.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
 
-  exposed_port = [{
-    port     = 8083
-    protocol = "TCP"
-    }, {
-    port     = 80
-    protocol = "TCP"
-  }]
-
-  dns_name_label      = "cinema-catalog-service-dev"   
-
-  container {
-    name         = "cr-cinema-catalog-service-dev-pl-01"
-    image        = "crcinemadevpl01.azurecr.io/cinema-catalog-service:latest"
-    cpu          = 1
-    cpu_limit    = 1
-    memory       = 1.5
-    memory_limit = 1.5
-
-    environment_variables = {
-      CATALOG_DB_URL           = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/catalog_service"
-      CATALOG_DB_USERNAME      = "psqladmin"
-      CATALOG_DB_PASSWORD      = var.db_password
-      KAFKA_BOOTSTRAP_SERVER   = var.kafka_server
-      SCHEMA_REGISTRY_URL      = var.schema_registry_url
-      KAFKA_AUTO_CREATE_TOPICS = "false"
-    }
-
-    ports {
-      port     = 8083
-      protocol = "TCP"
-    }
-    ports {
-      port     = 80
-      protocol = "TCP"
+  registry {
+    server               = var.acr_server
+    username             = var.acr_username
+    password_secret_name = "acr-password"
+  }
+  ingress {
+    external_enabled = true
+    target_port      = 8083
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
     }
   }
+  secret {
+    name  = "acr-password"
+    value = var.acr_password
+  }
+  secret {
+    name  = "db-password"
+    value = var.db_password
+  }
 
-  image_registry_credential {
-    server   = var.acr_server
-    username = var.acr_username
-    password = var.acr_password
+  template {
+    min_replicas = 0
+    max_replicas = 1
+    container {
+      name   = "catalog-service"
+      image  = "crcinemadevpl1.azurecr.io/cinema-catalog-service:latest"
+      cpu    = 0.5
+      memory = "1.0Gi"
+      env {
+        name  = "CATALOG_DB_URL"
+        value = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/catalog_service"
+      }
+      env {
+        name  = "CATALOG_DB_USERNAME"
+        value = "psqladmin"
+      }
+      env {
+        name  = "KAFKA_BOOTSTRAP_SERVER"
+        value = var.kafka_server
+      }
+      env {
+        name  = "SCHEMA_REGISTRY_URL"
+        value = var.schema_registry_url
+      }
+      env {
+        name  = "KAFKA_AUTO_CREATE_TOPICS"
+        value = "false"
+      }
+      env {
+        name        = "CATALOG_DB_PASSWORD"
+        secret_name = "db-password"
+      }
+    }
   }
 }

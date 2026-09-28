@@ -15,12 +15,12 @@ variable "db_password" {
 
 variable "acr_server" {
   type    = string
-  default = "crcinemadevpl01.azurecr.io"
+  default = "crcinemadevpl1.azurecr.io"
 }
 
 variable "acr_username" {
   type    = string
-  default = "crcinemadevpl01"
+  default = "crcinemadevpl1"
 }
 
 variable "acr_password" {
