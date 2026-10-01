@@ -25,6 +25,12 @@ public class SessionChangedConsumer {
   @KafkaListener(topics = "${app.kafka.topics.catalog-events}", groupId = "${spring.kafka.consumer.group-id}")
   @Transactional
   public void listen(SessionChangedEvent message) {
+    log.info("Processing session event with artificial delay for KEDA testing...");
+    try {
+      Thread.sleep(90000);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
     var payload = message.getPayload();
     movieSessionRepository.upsertSession( //
         UUID.randomUUID(), //

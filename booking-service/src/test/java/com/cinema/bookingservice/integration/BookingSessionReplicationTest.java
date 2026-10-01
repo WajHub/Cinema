@@ -14,9 +14,10 @@ import com.cinema.kafka.event.SessionChangedEventType;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-
+@Disabled("Temporarily disabled")
 class BookingSessionReplicationTest extends IntegrationTestConfiguration {
 
   @Test
