@@ -1,3 +1,10 @@
+# creating user-assigned identity
+resource "azurerm_user_assigned_identity" "id_catalog" {
+  name                = "id-catalog-service-dev"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+}
+
 resource "azurerm_container_app" "catalog" {
   name                         = "ca-catalog-service-dev-pl-01"
   container_app_environment_id = azurerm_container_app_environment.dev.id
@@ -17,13 +24,21 @@ resource "azurerm_container_app" "catalog" {
       latest_revision = true
     }
   }
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.id_catalog.id]
+  }
+
   secret {
-    name  = "acr-password"
-    value = var.acr_password
+    name                = "acr-password"
+    identity            = azurerm_user_assigned_identity.id_catalog.id
+    key_vault_secret_id = "${azurerm_key_vault.key_vault.vault_uri}secrets/acr-password"
   }
   secret {
-    name  = "db-password"
-    value = var.db_password
+    name                = "db-password"
+    identity            = azurerm_user_assigned_identity.id_catalog.id
+    key_vault_secret_id = "${azurerm_key_vault.key_vault.vault_uri}secrets/db-password"
   }
 
   template {
@@ -33,7 +48,7 @@ resource "azurerm_container_app" "catalog" {
       name   = "catalog-service"
       image  = "crcinemadevpl1.azurecr.io/cinema-catalog-service:latest"
       cpu    = 0.5
-      memory = "1.0Gi"
+      memory = "1Gi"
       env {
         name  = "CATALOG_DB_URL"
         value = "jdbc:postgresql://psql-cinema-dev-pl.postgres.database.azure.com:5432/catalog_service"
