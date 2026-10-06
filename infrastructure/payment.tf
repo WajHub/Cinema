@@ -1,3 +1,10 @@
+# creating user-assigned identity
+resource "azurerm_user_assigned_identity" "id_payment" {
+  name                = "id-payment-service-dev"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+}
+
 resource "azurerm_container_app" "payment" {
   name                         = "ca-payment-service-dev-pl-01"
   container_app_environment_id = azurerm_container_app_environment.dev.id
@@ -19,24 +26,33 @@ resource "azurerm_container_app" "payment" {
     }
   }
 
-  secret {
-    name  = "acr-password"
-    value = var.acr_password
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.id_payment.id]
   }
 
   secret {
-    name  = "db-password"
-    value = var.db_password
+    name                = "acr-password"
+    identity            = azurerm_user_assigned_identity.id_payment.id
+    key_vault_secret_id = "${azurerm_key_vault.key_vault.vault_uri}secrets/acr-password"
   }
 
   secret {
-    name  = "stripe-secret-key"
-    value = var.stripe_secret_key
+    name                = "db-password"
+    identity            = azurerm_user_assigned_identity.id_payment.id
+    key_vault_secret_id = "${azurerm_key_vault.key_vault.vault_uri}secrets/db-password"
   }
 
   secret {
-    name  = "stripe-webhook-secret"
-    value = var.stripe_webhook_secret
+    name                = "stripe-secret-key"
+    identity            = azurerm_user_assigned_identity.id_payment.id
+    key_vault_secret_id = "${azurerm_key_vault.key_vault.vault_uri}secrets/stripe-secret-key"
+  }
+
+  secret {
+    name                = "stripe-webhook-secret"
+    identity            = azurerm_user_assigned_identity.id_payment.id
+    key_vault_secret_id = "${azurerm_key_vault.key_vault.vault_uri}secrets/stripe-webhook-secret"
   }
 
   template {
@@ -47,7 +63,7 @@ resource "azurerm_container_app" "payment" {
       name   = "payment-service"
       image  = "crcinemadevpl1.azurecr.io/cinema-payment-service:latest"
       cpu    = 0.5
-      memory = "1.0Gi"
+      memory = "1Gi"
 
       env {
         name  = "PAYMENT_DB_URL"
@@ -96,3 +112,4 @@ resource "azurerm_container_app" "payment" {
     }
   }
 }
+

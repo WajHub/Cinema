@@ -1,3 +1,10 @@
+# creating user-assigned identity
+resource "azurerm_user_assigned_identity" "id_booking" {
+  name                = "id-booking-service-dev"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+}
+
 resource "azurerm_container_app" "booking" {
   name                         = "ca-booking-service-dev-pl-01"
   container_app_environment_id = azurerm_container_app_environment.dev.id
@@ -19,25 +26,47 @@ resource "azurerm_container_app" "booking" {
     }
   }
 
-  secret {
-    name  = "acr-password"
-    value = var.acr_password
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.id_booking.id]
   }
 
   secret {
-    name  = "db-password"
-    value = var.db_password
+    name                = "acr-password"
+    identity            = azurerm_user_assigned_identity.id_booking.id
+    key_vault_secret_id = "${azurerm_key_vault.key_vault.vault_uri}secrets/acr-password"
+  }
+
+  secret {
+    name                = "db-password"
+    identity            = azurerm_user_assigned_identity.id_booking.id
+    key_vault_secret_id = "${azurerm_key_vault.key_vault.vault_uri}secrets/db-password"
   }
 
   template {
     min_replicas = 0
     max_replicas = 1
 
+    # KEDA Exercies ----
+    # polling_interval_in_seconds = 10
+    # cooldown_period_in_seconds = 60
+
+    # custom_scale_rule {
+    #   name = "my-scale-rule"
+    #   custom_rule_type = "kafka"
+    #   metadata = { 
+    #     bootstrapServers="141.144.247.230:9094" 
+    #     consumerGroup="booking-group" 
+    #     topic="dev.cinema.sessions.v1"
+    #     lagThreshold="2" 
+    #  }
+    # }
+    # ------------------
     container {
       name   = "booking-service"
       image  = "crcinemadevpl1.azurecr.io/cinema-booking-service:latest"
       cpu    = 0.5
-      memory = "1.0Gi"
+      memory = "1Gi"
 
       env {
         name  = "BOOKING_DB_URL"
@@ -70,3 +99,4 @@ resource "azurerm_container_app" "booking" {
     }
   }
 }
+
